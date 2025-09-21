@@ -1,0 +1,28 @@
+{
+  "name": "personal-finance-tracker",
+  "version": "1.0.0",
+  "description": "Personal Finance Tracker Full stack application",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rajesh91825/Personal-Finance-Tracker.git"
+  },
+  "author": "Rajesh Bora",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Rajesh91825/Personal-Finance-Tracker/issues"
+  },
+  "homepage": "https://github.com/Rajesh91825/Personal-Finance-Tracker#readme",
+  "keywords": [],
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.16.3"
+  }
+}
