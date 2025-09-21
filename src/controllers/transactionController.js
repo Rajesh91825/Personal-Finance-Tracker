@@ -15,6 +15,53 @@ const getTransactions = async (req, res) => {
   }
 };
 
+// Get filtered transactions for a user
+const getFilteredTransactions = async (req, res) => {
+  const { startDate, endDate, category_id, minAmount, maxAmount } = req.query;
+
+  try {
+    let query = "SELECT t.id, t.amount, t.description, t.transaction_date, c.name as category " +
+                "FROM transactions t JOIN categories c ON t.category_id = c.id " +
+                "WHERE t.user_id = $1";
+    let values = [req.user.id];
+    let idx = 2;
+
+    if (startDate) {
+      query += ` AND t.transaction_date >= $${idx}`;
+      values.push(startDate);
+      idx++;
+    }
+    if (endDate) {
+      query += ` AND t.transaction_date <= $${idx}`;
+      values.push(endDate);
+      idx++;
+    }
+    if (category_id) {
+      query += ` AND t.category_id = $${idx}`;
+      values.push(category_id);
+      idx++;
+    }
+    if (minAmount) {
+      query += ` AND t.amount >= $${idx}`;
+      values.push(minAmount);
+      idx++;
+    }
+    if (maxAmount) {
+      query += ` AND t.amount <= $${idx}`;
+      values.push(maxAmount);
+      idx++;
+    }
+
+    query += " ORDER BY t.transaction_date DESC";
+
+    const result = await pool.query(query, values);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch filtered transactions ❌" });
+  }
+};
+
 // Add a transaction
 const addTransaction = async (req, res) => {
   const { amount, description, transaction_date, category_id } = req.body;
@@ -36,7 +83,6 @@ const updateTransaction = async (req, res) => {
   const { amount, description, transaction_date, category_id } = req.body;
 
   try {
-    // Fetch current transaction
     const current = await pool.query("SELECT * FROM transactions WHERE id=$1 AND user_id=$2", [id, req.user.id]);
     if (current.rows.length === 0) return res.status(404).json({ error: "Transaction not found" });
 
@@ -59,7 +105,6 @@ const updateTransaction = async (req, res) => {
   }
 };
 
-
 // Delete a transaction
 const deleteTransaction = async (req, res) => {
   const { id } = req.params;
@@ -72,4 +117,5 @@ const deleteTransaction = async (req, res) => {
   }
 };
 
-module.exports = { getTransactions, addTransaction, updateTransaction, deleteTransaction };
+module.exports = { getTransactions, getFilteredTransactions, addTransaction, updateTransaction, deleteTransaction };
+
