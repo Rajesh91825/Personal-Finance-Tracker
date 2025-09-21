@@ -4,6 +4,9 @@ require("dotenv").config();
 const authRoutes = require("./routes/auth");
 const pool = require("./config/db");
 const transactionRoutes = require("./routes/transactionRoutes");
+const categoryRoutes = require("./routes/categoryRoutes");
+const summaryRoutes = require("./routes/summaryRoutes");
+const unusualRoutes = require("./routes/unusualRoutes");
 
 const app = express();
 app.use(cors());
@@ -31,3 +34,6 @@ app.get("/db-test", async (req, res) => {
 
 app.use("/auth", authRoutes);
 app.use("/transactions", transactionRoutes);
+app.use("/categories", categoryRoutes);
+app.use("/transactions/summary", summaryRoutes);
+app.use("/transactions/unusual", unusualRoutes);
