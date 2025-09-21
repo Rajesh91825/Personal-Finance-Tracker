@@ -1,4 +1,3 @@
-// src/contexts/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState } from "react";
 import api from "../api/client";
 
@@ -13,18 +12,18 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [token, setToken] = useState<string | null>(() => localStorage.getItem("token"));
 
-  useEffect(() => {
-    if (token) localStorage.setItem("token", token);
-    else localStorage.removeItem("token");
-  }, [token]);
-
-  const login = (t: string) => setToken(t);
-  const logout = () => {
-    setToken(null);
-    // optionally clear other user data
+  const login = (newToken: string) => {
+    localStorage.setItem("token", newToken);
+    setToken(newToken);
+    api.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
   };
 
-  // optional: set axios default header immediately
+  const logout = () => {
+    localStorage.removeItem("token");
+    setToken(null);
+    delete api.defaults.headers.common["Authorization"];
+  };
+
   useEffect(() => {
     if (token) api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
     else delete api.defaults.headers.common["Authorization"];

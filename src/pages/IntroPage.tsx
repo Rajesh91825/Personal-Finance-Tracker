@@ -1,17 +1,16 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import "../styles.css";
 
 const IntroPage: React.FC = () => {
   return (
-    <div className="center-page">
-      <div className="card promo-card">
-        <h1>Welcome to FinTrack</h1>
-        <p className="muted">
-          Track expenses, manage categories, and view insights — all in one place.
-        </p>
-        <div className="cta-row">
-          <Link to="/register" className="btn btn-primary">Get started</Link>
-          <Link to="/login" className="btn btn-outline">Login</Link>
+    <div className="intro-page">
+      <div className="intro-card">
+        <h1 className="intro-title">💰 Welcome to FinTrack</h1>
+        <p className="intro-subtitle">Your personal finance tracker made simple.</p>
+        <div className="intro-actions">
+          <Link to="/login" className="btn-primary">Login</Link>
+          <Link to="/register" className="btn-secondary">Register</Link>
         </div>
       </div>
     </div>

@@ -1,67 +1,72 @@
-// src/pages/Categories.tsx
 import React, { useEffect, useState } from "react";
 import api from "../api/client";
-import { Category } from "../types";
+import "../styles.css";
 
-const CategoriesPage: React.FC = () => {
+interface Category {
+  id: string;
+  name: string;
+}
+
+const Categories: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [newName, setNewName] = useState("");
+  const [newCat, setNewCat] = useState("");
 
-  const load = async () => {
+  const fetchCategories = async () => {
     try {
       const res = await api.get("/categories");
-      setCategories(res.data);
-    } catch {
-      alert("Failed to load");
+      setCategories(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error("Failed to load categories", err);
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
-  const add = async () => {
-    if (!newName.trim()) return alert("Enter a name");
+  const addCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCat.trim()) return;
     try {
-      await api.post("/categories", { name: newName });
-      setNewName("");
-      load();
-    } catch {
-      alert("Add failed");
+      const res = await api.post("/categories", { name: newCat });
+      setCategories((prev) => [...prev, res.data]);
+      setNewCat("");
+    } catch (err) {
+      console.error("Failed to add category", err);
     }
   };
 
-  const remove = async (id: number) => {
-    if (!window.confirm("Delete category?")) return;
+  const deleteCategory = async (id: string) => {
     try {
       await api.delete(`/categories/${id}`);
-      load();
-    } catch {
-      alert("Delete failed");
+      setCategories((prev) => prev.filter((c) => c.id !== id));
+    } catch (err) {
+      console.error("Failed to delete category", err);
     }
   };
 
   return (
-    <div>
-      <h1 className="text-2xl mb-4">Categories</h1>
-
-      <div className="bg-white p-4 mb-4 rounded shadow">
-        <div className="flex gap-2">
-          <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="New category" className="border px-3 py-2 rounded flex-1" />
-          <button onClick={add} className="px-3 py-2 bg-green-600 text-white rounded">Add</button>
-        </div>
-      </div>
-
-      <div className="bg-white p-4 rounded shadow">
-        <ul>
-          {categories.map(c => (
-            <li key={c.id} className="flex justify-between py-2 border-b">
-              <span>{c.name}</span>
-              <button onClick={() => remove(c.id)} className="text-red-600">Delete</button>
-            </li>
-          ))}
-        </ul>
-      </div>
+    <div className="page">
+      <h2>📂 Categories</h2>
+      <form onSubmit={addCategory} className="form-inline">
+        <input
+          className="auth-input"
+          placeholder="New category"
+          value={newCat}
+          onChange={(e) => setNewCat(e.target.value)}
+        />
+        <button className="btn-primary" type="submit">Add</button>
+      </form>
+      <ul className="list">
+        {categories.map((c) => (
+          <li key={c.id} className="list-item">
+            {c.name}
+            <button className="btn-danger small" onClick={() => deleteCategory(c.id)}>✕</button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };
 
-export default CategoriesPage;
+export default Categories;

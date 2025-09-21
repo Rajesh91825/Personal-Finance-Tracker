@@ -1,38 +1,22 @@
 import React from "react";
-
-type CategoryStat = { name: string; amount: number };
-
-const categories: CategoryStat[] = [
-  { name: "Transport", amount: 750 },
-  { name: "Food", amount: 651.25 },
-  { name: "Rent", amount: 240 },
-  { name: "Entertainment", amount: 200 },
-  { name: "Utilities", amount: 130 },
-];
+import "../styles.css";
 
 const Dashboard: React.FC = () => {
-  const total = categories.reduce((s, c) => s + c.amount, 0);
-
   return (
-    <div>
-      <h2 className="page-title">Dashboard</h2>
-
-      <div className="grid-2 gap">
+    <div className="page">
+      <h2>📊 Dashboard</h2>
+      <div className="grid-3">
         <div className="card">
-          <h3>Total spending</h3>
-          <div className="big-number">₹ {total.toFixed(2)}</div>
+          <h3>Total Balance</h3>
+          <p className="big-number">$12,540</p>
         </div>
-
         <div className="card">
-          <h3>Quick stats</h3>
-          <ul className="stat-list">
-            {categories.map((c) => (
-              <li key={c.name}>
-                <span>{c.name}</span>
-                <span>₹ {c.amount.toFixed(2)}</span>
-              </li>
-            ))}
-          </ul>
+          <h3>Total Income</h3>
+          <p className="big-number">$7,800</p>
+        </div>
+        <div className="card">
+          <h3>Total Expenses</h3>
+          <p className="big-number">$5,260</p>
         </div>
       </div>
     </div>

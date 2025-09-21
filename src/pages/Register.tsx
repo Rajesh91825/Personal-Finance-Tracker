@@ -1,45 +1,66 @@
-// src/pages/Register.tsx
-import React from "react";
-import { useForm } from "react-hook-form";
-import api from "../api/client";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../api/client";
+import "../styles.css";
 
-type FormData = { username: string; email: string; password: string };
-
-const RegisterPage: React.FC = () => {
-  const { register, handleSubmit } = useForm<FormData>();
+const Register: React.FC = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
 
-  const onSubmit = async (data: FormData) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
     try {
-      await api.post("/auth/register", data);
-      alert("Registered — please login");
-      navigate("/login");
+      await api.post("/auth/register", { email, password });
+      setSuccess(true);
+      setTimeout(() => navigate("/login"), 1500);
     } catch (err: any) {
-      alert(err?.response?.data?.message || err.message || "Registration failed");
+      setError(err.response?.data?.message || "Registration failed");
     }
   };
 
   return (
-    <div className="max-w-md mx-auto bg-white p-6 rounded shadow">
-      <h1 className="text-2xl mb-4">Register</h1>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div>
-          <label className="block text-sm">Username</label>
-          <input {...register("username", { required: true })} className="w-full border px-3 py-2 rounded" />
-        </div>
-        <div>
-          <label className="block text-sm">Email</label>
-          <input {...register("email", { required: true })} className="w-full border px-3 py-2 rounded" />
-        </div>
-        <div>
-          <label className="block text-sm">Password</label>
-          <input type="password" {...register("password", { required: true })} className="w-full border px-3 py-2 rounded" />
-        </div>
-        <button className="w-full bg-green-600 text-white py-2 rounded">Register</button>
+    <div className="auth-page">
+      <form className="auth-card" onSubmit={handleSubmit}>
+        <h2>📝 Register</h2>
+        {error && <div className="alert-error">{error}</div>}
+        {success && <div className="alert-success">Registration successful! Redirecting...</div>}
+        <input
+          type="email"
+          placeholder="Email"
+          className="auth-input"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          className="auth-input"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Confirm Password"
+          className="auth-input"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          required
+        />
+        <button className="btn-primary" type="submit">Register</button>
       </form>
     </div>
   );
 };
 
-export default RegisterPage;
+export default Register;
