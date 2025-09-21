@@ -1,49 +1,42 @@
-// src/pages/Dashboard.tsx
-import React, { useEffect, useState } from "react";
-import api from "../api/client";
-import { Summary } from "../types";
+import React from "react";
 
-const DashboardPage: React.FC = () => {
-  const [summary, setSummary] = useState<Summary | null>(null);
-  const [period, setPeriod] = useState<"monthly" | "weekly">("monthly");
+type CategoryStat = { name: string; amount: number };
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await api.get("/transactions/summary", { params: { period } });
-        setSummary(res.data);
-      } catch (err: any) {
-        alert("Failed to load summary");
-      }
-    })();
-  }, [period]);
+const categories: CategoryStat[] = [
+  { name: "Transport", amount: 750 },
+  { name: "Food", amount: 651.25 },
+  { name: "Rent", amount: 240 },
+  { name: "Entertainment", amount: 200 },
+  { name: "Utilities", amount: 130 },
+];
+
+const Dashboard: React.FC = () => {
+  const total = categories.reduce((s, c) => s + c.amount, 0);
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <select value={period} onChange={e => setPeriod(e.target.value as any)} className="border px-2 py-1 rounded">
-          <option value="monthly">Monthly</option>
-          <option value="weekly">Weekly</option>
-        </select>
-      </div>
+      <h2 className="page-title">Dashboard</h2>
 
-      <div className="bg-white p-6 rounded shadow">
-        <h2 className="text-lg font-semibold mb-2">Total spending</h2>
-        <div className="text-3xl font-bold mb-4">{summary ? `₹ ${summary.total_spending}` : "—"}</div>
+      <div className="grid-2 gap">
+        <div className="card">
+          <h3>Total spending</h3>
+          <div className="big-number">₹ {total.toFixed(2)}</div>
+        </div>
 
-        <h3 className="font-semibold mb-2">By category</h3>
-        <ul className="space-y-2">
-          {summary?.per_category?.map((p, idx) => (
-            <li key={idx} className="flex justify-between border-b py-2">
-              <span>{p.category}</span>
-              <span>₹ {p.total}</span>
-            </li>
-          )) || <li>No data</li>}
-        </ul>
+        <div className="card">
+          <h3>Quick stats</h3>
+          <ul className="stat-list">
+            {categories.map((c) => (
+              <li key={c.name}>
+                <span>{c.name}</span>
+                <span>₹ {c.amount.toFixed(2)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </div>
   );
 };
 
-export default DashboardPage;
+export default Dashboard;

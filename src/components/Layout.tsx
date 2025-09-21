@@ -1,37 +1,79 @@
-// src/components/Layout.tsx
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import { Link, Outlet, useNavigate } from "react-router-dom";
+import "../styles.css";
 
-const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { token, logout } = useAuth();
+const navItems = [
+  { path: "/dashboard", label: "Dashboard", emoji: "📊" },
+  { path: "/transactions", label: "Transactions", emoji: "💸" },
+  { path: "/categories", label: "Categories", emoji: "📂" },
+  { path: "/analytics", label: "Analytics", emoji: "📈" },
+  { path: "/export", label: "Export", emoji: "⬇️" },
+];
+
+const Layout: React.FC = () => {
   const navigate = useNavigate();
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-          <Link to="/dashboard" className="text-xl font-semibold">FinTrack</Link>
-          <nav className="flex items-center gap-4">
-            <Link to="/transactions" className="hover:underline">Transactions</Link>
-            <Link to="/categories" className="hover:underline">Categories</Link>
-            <Link to="/export" className="hover:underline">Export</Link>
-            {token ? (
-              <button
-                onClick={() => { logout(); navigate("/login"); }}
-                className="text-sm px-3 py-1 border rounded"
-              >Logout</button>
-            ) : (
-              <>
-                <Link to="/login" className="text-sm px-3 py-1 border rounded">Login</Link>
-                <Link to="/register" className="text-sm px-3 py-1 border rounded">Register</Link>
-              </>
-            )}
-          </nav>
-        </div>
-      </header>
+  const handleLogout = () => {
+    // clear whatever auth you use
+    localStorage.removeItem("token");
+    navigate("/login");
+  };
 
-      <main className="max-w-6xl mx-auto px-4 py-8">{children}</main>
+  return (
+    <div className="layout">
+      {/* Sidebar */}
+      <aside className="sidebar">
+        <div className="brand">FinTrack</div>
+        <nav className="nav">
+          {navItems.map((n) => (
+            <Link
+              key={n.path}
+              to={n.path}
+              className="nav-link"
+              aria-label={n.label}
+            >
+              <span className="nav-emoji">{n.emoji}</span>
+              <span className="nav-text">{n.label}</span>
+            </Link>
+          ))}
+        </nav>
+        <div className="sidebar-footer">v1.0</div>
+      </aside>
+
+      {/* Main area */}
+      <div className="main-area">
+        {/* Topbar */}
+        <header className="topbar">
+          <div className="topbar-left">
+            <button
+              className="topbar-btn"
+              onClick={() => navigate("/dashboard")}
+              title="Go to dashboard"
+            >
+              Home
+            </button>
+          </div>
+
+          <div className="topbar-right">
+            <div className="profile">
+              <img
+                src="https://i.pravatar.cc/40"
+                alt="avatar"
+                className="avatar"
+              />
+              <span className="profile-name">User</span>
+            </div>
+            <button className="btn-logout" onClick={handleLogout}>
+              Logout
+            </button>
+          </div>
+        </header>
+
+        {/* Content */}
+        <main className="content">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 };

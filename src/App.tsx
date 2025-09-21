@@ -1,53 +1,38 @@
-// src/App.tsx
 import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
-import { ProtectedRoute } from "./components/ProtectedRoute";
-import LoginPage from "./pages/Login";
-import RegisterPage from "./pages/Register";
-import DashboardPage from "./pages/Dashboard";
-import TransactionsPage from "./pages/TransactionsList";
-import TransactionFormPage from "./pages/TransactionForm";
-import CategoriesPage from "./pages/Categories";
+import IntroPage from "./pages/IntroPage";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
+import Transactions from "./pages/Transactions";
+import Categories from "./pages/Categories";
+import Analytics from "./pages/Analytics";
 import ExportPage from "./pages/Export";
-import NotFound from "./pages/NotFound";
+import "./styles.css";
 
 const App: React.FC = () => {
   return (
-    <Layout>
+    <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        {/* Public landing */}
+        <Route path="/" element={<IntroPage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
-        <Route
-          path="/dashboard"
-          element={<ProtectedRoute children={<DashboardPage />} />}
-        />
-        <Route
-          path="/transactions"
-          element={<ProtectedRoute children={<TransactionsPage />} />}
-        />
-        <Route
-          path="/transactions/new"
-          element={<ProtectedRoute children={<TransactionFormPage />} />}
-        />
-        <Route
-          path="/transactions/:id/edit"
-          element={<ProtectedRoute children={<TransactionFormPage />} />}
-        />
-        <Route
-          path="/categories"
-          element={<ProtectedRoute children={<CategoriesPage />} />}
-        />
-        <Route
-          path="/export"
-          element={<ProtectedRoute children={<ExportPage />} />}
-        />
+        {/* Authenticated area with Layout (sidebar + topbar) */}
+        <Route element={<Layout />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/transactions" element={<Transactions />} />
+          <Route path="/categories" element={<Categories />} />
+          <Route path="/analytics" element={<Analytics />} />
+          <Route path="/export" element={<ExportPage />} />
+        </Route>
 
-        <Route path="*" element={<NotFound />} />
+        {/* fallback */}
+        <Route path="*" element={<IntroPage />} />
       </Routes>
-    </Layout>
+    </BrowserRouter>
   );
 };
 
