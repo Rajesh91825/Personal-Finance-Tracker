@@ -294,3 +294,132 @@ a {
   display: flex;
   gap: 1rem;
 }
+
+/* Filter bar for transactions */
+.filter-bar {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.transaction-form {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+/* Export cards */
+.export-cards {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.export-card {
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  flex: 1;
+  min-width: 220px;
+}
+
+.last-export {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: #475569;
+}
+
+/* User info in topbar */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.user-name {
+  font-weight: 500;
+}
+
+/* ---------------- Modal ---------------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(12, 18, 31, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+  animation: fadeIn .14s ease;
+}
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+
+.modal-card {
+  width: 640px;
+  max-width: calc(100% - 32px);
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(2,6,23,0.24);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:12px 16px;
+  border-bottom:1px solid #eef2f7;
+}
+.modal-header h3 { margin:0; font-size:1.05rem; }
+
+.modal-close {
+  background:transparent;
+  border:0;
+  padding:6px 8px;
+  font-size:1.05rem;
+  cursor:pointer;
+  border-radius:6px;
+}
+.modal-close:hover { background:#f3f5f7; }
+
+.modal-body { padding:16px; max-height:60vh; overflow:auto; }
+.modal-footer { padding:12px 16px; display:flex; gap:8px; justify-content:flex-end; border-top:1px solid #eef2f7; }
+
+/* ---------------- layout cards & tables polish ---------------- */
+.page-header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px; }
+.category-grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(160px,1fr)); gap:12px; }
+.category-card {
+  background:#fff; padding:12px; border-radius:10px; box-shadow: 0 6px 14px rgba(2,6,23,0.04);
+  display:flex; justify-content:space-between; align-items:center;
+}
+.category-name { font-weight:600; }
+.category-actions { display:flex; gap:8px; }
+
+/* table wrapper for responsive */
+.table-wrap { background:#fff; border-radius:10px; padding:8px; box-shadow: 0 6px 14px rgba(2,6,23,0.04); }
+.styled-table thead tr { background:#f8fafc; }
+.styled-table tbody tr:hover { background:#fbfdff; }
+
+/* form stack */
+.form-stack { display:flex; flex-direction:column; gap:8px; }
+.label { font-size:0.9rem; color:#374151; margin-bottom:6px; }
+
+/* transaction filter spacing */
+.filter-bar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
+
+/* category card action buttons */
+.btn-ghost { padding:6px 8px; border-radius:8px; background:#f3f6f9; border:1px solid #e6eef8; cursor:pointer; }
+.btn-ghost:hover { background:#eef3fa; }
+
+/* small tweak for list-item */
+.list-item { display:flex; justify-content:space-between; align-items:center; padding:10px; background:#fff; border-radius:8px; margin-bottom:8px; }
+
+/* responsive tweaks */
+@media (max-width: 820px) {
+  .modal-card { width: 92%; }
+  .grid-3 { grid-template-columns: 1fr; }
+}
