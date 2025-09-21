@@ -34,17 +34,31 @@ const addTransaction = async (req, res) => {
 const updateTransaction = async (req, res) => {
   const { id } = req.params;
   const { amount, description, transaction_date, category_id } = req.body;
+
   try {
+    // Fetch current transaction
+    const current = await pool.query("SELECT * FROM transactions WHERE id=$1 AND user_id=$2", [id, req.user.id]);
+    if (current.rows.length === 0) return res.status(404).json({ error: "Transaction not found" });
+
+    const updated = {
+      amount: amount ?? current.rows[0].amount,
+      description: description ?? current.rows[0].description,
+      transaction_date: transaction_date ?? current.rows[0].transaction_date,
+      category_id: category_id ?? current.rows[0].category_id
+    };
+
     await pool.query(
       "UPDATE transactions SET category_id=$1, amount=$2, description=$3, transaction_date=$4 WHERE id=$5 AND user_id=$6",
-      [category_id, amount, description, transaction_date, id, req.user.id]
+      [updated.category_id, updated.amount, updated.description, updated.transaction_date, id, req.user.id]
     );
-    res.json({ message: "Transaction updated ✅" });
+
+    res.json({ message: "Transaction updated ✅", transaction: updated });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to update transaction ❌" });
   }
 };
+
 
 // Delete a transaction
 const deleteTransaction = async (req, res) => {
