@@ -3,6 +3,7 @@ const cors = require("cors");
 require("dotenv").config();
 const authRoutes = require("./routes/auth");
 const pool = require("./config/db");
+const transactionRoutes = require("./routes/transactionRoutes");
 
 const app = express();
 app.use(cors());
@@ -29,3 +30,4 @@ app.get("/db-test", async (req, res) => {
 });
 
 app.use("/auth", authRoutes);
+app.use("/transactions", transactionRoutes);

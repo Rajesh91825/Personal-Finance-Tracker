@@ -1,0 +1,61 @@
+const pool = require("../config/db");
+
+// Get all transactions for a user
+const getTransactions = async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT t.id, t.amount, t.description, t.transaction_date, c.name as category " +
+      "FROM transactions t JOIN categories c ON t.category_id = c.id WHERE t.user_id = $1 ORDER BY t.transaction_date DESC",
+      [req.user.id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch transactions ❌" });
+  }
+};
+
+// Add a transaction
+const addTransaction = async (req, res) => {
+  const { amount, description, transaction_date, category_id } = req.body;
+  try {
+    await pool.query(
+      "INSERT INTO transactions (user_id, category_id, amount, description, transaction_date) VALUES ($1, $2, $3, $4, $5)",
+      [req.user.id, category_id, amount, description, transaction_date]
+    );
+    res.status(201).json({ message: "Transaction added ✅" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to add transaction ❌" });
+  }
+};
+
+// Update a transaction
+const updateTransaction = async (req, res) => {
+  const { id } = req.params;
+  const { amount, description, transaction_date, category_id } = req.body;
+  try {
+    await pool.query(
+      "UPDATE transactions SET category_id=$1, amount=$2, description=$3, transaction_date=$4 WHERE id=$5 AND user_id=$6",
+      [category_id, amount, description, transaction_date, id, req.user.id]
+    );
+    res.json({ message: "Transaction updated ✅" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to update transaction ❌" });
+  }
+};
+
+// Delete a transaction
+const deleteTransaction = async (req, res) => {
+  const { id } = req.params;
+  try {
+    await pool.query("DELETE FROM transactions WHERE id=$1 AND user_id=$2", [id, req.user.id]);
+    res.json({ message: "Transaction deleted ✅" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to delete transaction ❌" });
+  }
+};
+
+module.exports = { getTransactions, addTransaction, updateTransaction, deleteTransaction };
