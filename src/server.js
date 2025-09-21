@@ -7,6 +7,7 @@ const transactionRoutes = require("./routes/transactionRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const summaryRoutes = require("./routes/summaryRoutes");
 const unusualRoutes = require("./routes/unusualRoutes");
+const exportRoutes = require("./routes/exportRoutes");
 
 const app = express();
 app.use(cors());
@@ -37,3 +38,4 @@ app.use("/transactions", transactionRoutes);
 app.use("/categories", categoryRoutes);
 app.use("/transactions/summary", summaryRoutes);
 app.use("/transactions/unusual", unusualRoutes);
+app.use("/export", exportRoutes);  
