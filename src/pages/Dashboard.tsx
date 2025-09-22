@@ -1,132 +1,61 @@
 import React, { useEffect, useState } from "react";
-import api from "../api/client";
-import { useNavigate } from "react-router-dom";
-import { Summary, Transaction } from "../types";
+import api from "../services/api";
 
-const DashboardPage: React.FC = () => {
-  const [summary, setSummary] = useState<Summary | null>(null);
-  const [period, setPeriod] = useState<"monthly" | "weekly">("monthly");
-  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
-  const navigate = useNavigate();
+type Transaction = {
+  id: number;
+  amount: number | string;
+  category: string;
+  category_type: "income" | "expense";
+};
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await api.get("/transactions/summary", { params: { period } });
-        setSummary(res.data);
-      } catch {
-        setSummary(null);
-      }
-    })();
-  }, [period]);
+export default function Dashboard() {
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
 
   useEffect(() => {
-    (async () => {
+    const fetchData = async () => {
       try {
         const res = await api.get("/transactions");
-        const list: Transaction[] = Array.isArray(res.data) ? res.data : [];
-        setRecentTransactions(list.slice(0, 5));
-      } catch {
-        setRecentTransactions([]);
+        setTransactions(res.data || []);
+      } catch (err) {
+        console.error(err);
       }
-    })();
+    };
+    fetchData();
   }, []);
 
-  const goToTransactions = () => navigate("/transactions");
+  const totalIncome = transactions
+    .filter((t) => t.category_type === "income")
+    .reduce((sum, t) => sum + Number(t.amount), 0);
+
+  const totalExpense = transactions
+    .filter((t) => t.category_type === "expense")
+    .reduce((sum, t) => sum + Number(t.amount), 0);
+
+  const netBalance = totalIncome - totalExpense;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <div className="flex items-center gap-3">
-          <select
-            value={period}
-            onChange={(e) => setPeriod(e.target.value as any)}
-            className="border px-2 py-1 rounded"
-          >
-            <option value="monthly">Monthly</option>
-            <option value="weekly">Weekly</option>
-          </select>
-          <button
-            onClick={goToTransactions}
-            className="px-3 py-1 bg-blue-600 text-white rounded"
-          >
-            View all
-          </button>
+    <div className="page">
+      <h2>📊 Dashboard</h2>
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="bg-green-100 p-4 rounded shadow">
+          <h3 className="text-lg font-semibold">Total Income</h3>
+          <p className="text-2xl font-bold text-green-700">
+            ₹{Number(totalIncome).toFixed(2)}
+          </p>
         </div>
-      </div>
-
-      {/* Summary */}
-      <div className="bg-white p-6 rounded shadow">
-        <h2 className="text-lg font-semibold mb-2">Total spending</h2>
-        <div className="text-3xl font-bold mb-4">
-          {summary ? `₹ ${summary.total_spending}` : "—"}
+        <div className="bg-red-100 p-4 rounded shadow">
+          <h3 className="text-lg font-semibold">Total Expense</h3>
+          <p className="text-2xl font-bold text-red-700">
+            ₹{Number(totalExpense).toFixed(2)}
+          </p>
         </div>
-
-        <h3 className="font-semibold mb-2">By category</h3>
-        <table className="w-full border">
-          <tbody>
-            {summary?.per_category?.length ? (
-              summary.per_category.map((p, idx) => (
-                <tr key={idx} className="border-b">
-                  <td className="py-2 px-3">{p.category}</td>
-                  <td className="py-2 px-3 text-right">₹ {p.total}</td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td className="py-3 text-gray-500">No category data</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Recent Transactions */}
-      <div className="bg-white p-6 rounded shadow">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold">Recent Transactions</h3>
-          <small className="text-sm text-gray-500">Latest 5</small>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b">
-                <th className="py-2">Description</th>
-                <th className="py-2">Amount</th>
-                <th className="py-2">Date</th>
-                <th className="py-2">Category</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentTransactions.length ? (
-                recentTransactions.map((t) => (
-                  <tr key={String(t.id ?? Math.random())} className="border-b hover:bg-gray-50">
-                    <td className="py-2">{t.description}</td>
-                    <td className="py-2">₹{t.amount}</td>
-                    <td className="py-2">
-                      {t.transaction_date
-                        ? new Date(t.transaction_date).toLocaleDateString()
-                        : "—"}
-                    </td>
-                    <td className="py-2">{t.category ?? "—"}</td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={4} className="py-6 text-center text-gray-500">
-                    No recent transactions
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+        <div className="bg-blue-100 p-4 rounded shadow">
+          <h3 className="text-lg font-semibold">Net Balance</h3>
+          <p className="text-2xl font-bold text-blue-700">
+            ₹{Number(netBalance).toFixed(2)}
+          </p>
         </div>
       </div>
     </div>
   );
-};
-
-export default DashboardPage;
+}

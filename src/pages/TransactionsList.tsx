@@ -1,111 +1,149 @@
 import React, { useEffect, useState } from "react";
-import api from "../api/client";
+import api from "../services/api";
+import { toast } from "react-hot-toast";
+import Confirm from "../components/Confirm";
+import Modal from "../components/Modal";
+import { rupee } from "../utils/format";
 
-interface Category {
-  id: string;
-  name: string;
-}
-
-interface Transaction {
-  id: string;
+type Transaction = {
+  id: number;
   description: string;
-  amount: number | string;
+  amount: number;
   transaction_date: string;
-  category: { id: string; name: string };
-}
+  category: string;
+  category_type: "income" | "expense";
+};
 
-const TransactionsPage: React.FC = () => {
+type Category = {
+  id: number;
+  name: string;
+  type: "income" | "expense";
+};
+
+export default function TransactionsList() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [editing, setEditing] = useState<Transaction | null>(null);
+  const [form, setForm] = useState({
+    description: "",
+    amount: "",
+    date: "",
+    category_id: "",
+  });
+  const [confirmDelete, setConfirmDelete] = useState<Transaction | null>(null);
 
-  const [description, setDescription] = useState("");
-  const [amount, setAmount] = useState<number | string>("");
-  const [date, setDate] = useState("");
-  const [categoryId, setCategoryId] = useState("");
+  const load = async () => {
+    try {
+      const [tRes, cRes] = await Promise.all([
+        api.get("/transactions"),
+        api.get("/categories"),
+      ]);
+      setTransactions(tRes.data || []);
+      setCategories(cRes.data || []);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to fetch data ❌");
+    }
+  };
 
   useEffect(() => {
-    fetchTransactions();
-    fetchCategories();
+    load();
   }, []);
 
-  const fetchTransactions = async () => {
-    const res = await api.get("/transactions");
-    const data = Array.isArray(res.data) ? res.data : [];
-    // ensure amounts are numbers
-    setTransactions(
-      data.map((t) => ({
-        ...t,
-        amount: Number(t.amount),
-      }))
-    );
+  const handleSubmit = async () => {
+    try {
+      const payload = {
+        description: form.description,
+        amount: Number(form.amount),
+        transaction_date: form.date,
+        category_id: Number(form.category_id),
+      };
+
+      if (editing) {
+        await api.put(`/transactions/${editing.id}`, payload);
+        toast.success("Transaction updated ✅");
+      } else {
+        await api.post("/transactions", payload);
+        toast.success("Transaction added ✅");
+      }
+
+      setShowModal(false);
+      setEditing(null);
+      setForm({ description: "", amount: "", date: "", category_id: "" });
+      load();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to save transaction ❌");
+    }
   };
 
-  const fetchCategories = async () => {
-    const res = await api.get("/categories");
-    setCategories(res.data || []);
-  };
-
-  const handleAddTransaction = async () => {
-    if (!description || !amount || !date || !categoryId) return;
-
-    await api.post("/transactions", {
-      description,
-      amount: Number(amount),
-      transaction_date: date,
-      category_id: categoryId,
-    });
-
-    setIsModalOpen(false);
-    setDescription("");
-    setAmount("");
-    setDate("");
-    setCategoryId("");
-    fetchTransactions();
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure?")) return;
-    await api.delete(`/transactions/${id}`);
-    fetchTransactions();
+  const remove = async (id: number) => {
+    try {
+      await api.delete(`/transactions/${id}`);
+      toast.success("Transaction deleted ✅");
+      load();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete transaction ❌");
+    }
   };
 
   return (
-    <div>
-      <h2 className="text-2xl font-semibold mb-4">💸 Transactions</h2>
-
-      <button
-        onClick={() => setIsModalOpen(true)}
-        className="mb-4 px-4 py-2 bg-blue-500 text-white rounded"
-      >
+    <div className="page">
+      <h2>💸 Transactions</h2>
+      <button className="btn primary" onClick={() => setShowModal(true)}>
         + Add Transaction
       </button>
 
-      <table className="w-full border-collapse">
+      <table className="table">
         <thead>
-          <tr className="bg-gray-100 text-left">
-            <th className="p-2">Description</th>
-            <th className="p-2">Amount</th>
-            <th className="p-2">Date</th>
-            <th className="p-2">Category</th>
-            <th className="p-2">Actions</th>
+          <tr>
+            <th>Description</th>
+            <th>Amount</th>
+            <th>Date</th>
+            <th>Category</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {transactions.map((t) => (
-            <tr key={t.id} className="border-b">
-              <td className="p-2">{t.description}</td>
-              <td className="p-2">₹{Number(t.amount).toFixed(2)}</td>
-              <td className="p-2">
-                {t.transaction_date
-                  ? new Date(t.transaction_date).toLocaleDateString()
-                  : "—"}
+            <tr key={t.id}>
+              <td>{t.description}</td>
+              <td
+                className={
+                  t.category_type === "income" ? "text-green-600" : "text-red-600"
+                }
+              >
+                {t.category_type === "income"
+                  ? rupee(t.amount)
+                  : `-${rupee(t.amount)}`}
               </td>
-              <td className="p-2">{t.category?.name}</td>
-              <td className="p-2">
+              <td>{new Date(t.transaction_date).toISOString().slice(0, 10)}</td>
+              <td>{t.category}</td>
+              <td>
                 <button
-                  onClick={() => handleDelete(t.id)}
-                  className="px-3 py-1 bg-red-500 text-white rounded"
+                  className="btn small"
+                  onClick={() => {
+                    setEditing(t);
+                    setForm({
+                      description: t.description,
+                      amount: String(t.amount),
+                      date: new Date(t.transaction_date)
+                        .toISOString()
+                        .slice(0, 10),
+                      category_id: String(
+                        categories.find((c) => c.name === t.category)?.id || ""
+                      ),
+                    });
+                    setShowModal(true);
+                  }}
+                >
+                  Edit
+                </button>
+                <button
+                  className="btn danger small"
+                  onClick={() => setConfirmDelete(t)}
                 >
                   Delete
                 </button>
@@ -115,63 +153,74 @@ const TransactionsPage: React.FC = () => {
         </tbody>
       </table>
 
-      {/* Modal outside table */}
-      {isModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h3 className="text-lg font-bold mb-4">Add Transaction</h3>
-
-            <input
-              className="w-full p-2 border rounded mb-2"
-              placeholder="Description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-            <input
-              className="w-full p-2 border rounded mb-2"
-              type="number"
-              placeholder="Amount"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-            />
-            <input
-              className="w-full p-2 border rounded mb-2"
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-            />
-            <select
-              className="w-full p-2 border rounded mb-4"
-              value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-            >
-              <option value="">Select category</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-
-            <div className="flex justify-end gap-2">
+      {showModal && (
+        <Modal
+          open={showModal}
+          title={editing ? "Edit Transaction" : "Add Transaction"}
+          onClose={() => {
+            setShowModal(false);
+            setEditing(null);
+            setForm({ description: "", amount: "", date: "", category_id: "" });
+          }}
+          footer={
+            <>
               <button
-                onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 bg-gray-300 rounded"
+                className="btn outline"
+                onClick={() => {
+                  setShowModal(false);
+                  setEditing(null);
+                  setForm({ description: "", amount: "", date: "", category_id: "" });
+                }}
               >
                 Cancel
               </button>
-              <button
-                onClick={handleAddTransaction}
-                className="px-4 py-2 bg-blue-500 text-white rounded"
-              >
+              <button className="btn primary" onClick={handleSubmit}>
                 Save
               </button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        >
+          <input
+            type="text"
+            placeholder="Description"
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+          />
+          <input
+            type="number"
+            placeholder="Amount"
+            value={form.amount}
+            onChange={(e) => setForm({ ...form, amount: e.target.value })}
+          />
+          <input
+            type="date"
+            value={form.date}
+            onChange={(e) => setForm({ ...form, date: e.target.value })}
+          />
+          <select
+            value={form.category_id}
+            onChange={(e) => setForm({ ...form, category_id: e.target.value })}
+          >
+            <option value="">Select category</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name} ({c.type})
+              </option>
+            ))}
+          </select>
+        </Modal>
+      )}
+
+      {confirmDelete && (
+        <Confirm
+          open={!!confirmDelete}
+          title="Delete Transaction"
+          onCancel={() => setConfirmDelete(null)}
+          onConfirm={() => remove(confirmDelete.id)}
+        >
+          Are you sure you want to delete {confirmDelete.description}?
+        </Confirm>
       )}
     </div>
   );
-};
-
-export default TransactionsPage;
+}
