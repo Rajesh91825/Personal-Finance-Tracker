@@ -14,7 +14,7 @@ interface ConfirmProps {
 const Confirm: React.FC<ConfirmProps> = ({ open, title = "Confirm", message = "Are you sure?", onConfirm, onCancel, confirmLabel = "Yes", cancelLabel = "Cancel" }) => {
   return (
     <Modal
-      isOpen={open}
+      open={open}
       onClose={onCancel}
       title={title}
       footer={

@@ -1,96 +1,83 @@
-// src/pages/Analytics.tsx
 import React, { useEffect, useState } from "react";
-import api from "../api/client";
+import { summary, unusualTransactions } from "../services/api";
+import { rupee } from "../utils/format";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
-import { toast } from "react-hot-toast";
-import { rupee } from "../helpers/format";
+import toast from "react-hot-toast";
 
-const COLORS = ["#0284c7", "#06b6d4", "#f97316", "#f59e0b", "#8b5cf6", "#ef4444"];
+const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#AA46BE", "#F54291"];
 
-const Analytics: React.FC = () => {
+export default function Analytics() {
   const [chartData, setChartData] = useState<{ name: string; value: number }[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [multiplier, setMultiplier] = useState<number>(2);
   const [unusual, setUnusual] = useState<any[]>([]);
-  const [loadingUnusual, setLoadingUnusual] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await api.get("/transactions/summary?period=monthly");
-        const { per_category, total_spending } = res.data;
-        setChartData((per_category || []).map((c: any) => ({ name: c.category, value: Number(c.total) })));
-        setTotal(Number(total_spending || 0));
-      } catch {
-        toast.error("Failed to load analytics summary");
-      }
-    })();
-  }, []);
+  useEffect(()=>{ load(); }, []);
 
-  async function fetchUnusual() {
-    setLoadingUnusual(true);
+  async function load() {
     try {
-      const res = await api.get(`/transactions/unusual?period=monthly&multiplier=${multiplier}`);
-      setUnusual(res.data.unusual_transactions || []);
-      toast.success("Unusual transactions loaded");
-    } catch {
-      toast.error("Failed to load unusual transactions");
-    } finally {
-      setLoadingUnusual(false);
+      const s = await summary("monthly");
+      setChartData((s.per_category || []).map((p: any)=>({ name: p.category, value: Number(p.total)})));
+      setTotal(Number(s.total_spending || 0));
+    } catch (err) {}
+  }
+
+  async function checkUnusual() {
+    try {
+      const res = await unusualTransactions("monthly", multiplier);
+      setUnusual(res.unusual_transactions || []);
+      toast.success("Unusual transactions fetched");
+    } catch (err:any) {
+      toast.error(err?.response?.data?.message || "Error");
     }
   }
 
   return (
-    <div className="container">
-      <div className="page-title"><span>📈</span><div>Analytics</div></div>
+    <div className="page">
+      <h1 className="page-title">📈 Analytics</h1>
 
-      <div className="card mb-6">
-        <div className="text-lg">Total Spending: <strong>{rupee(total)}</strong></div>
-
-        <div className="chart-wrap mt-2">
-          {chartData.length > 0 ? (
-            <ResponsiveContainer width="60%" height="100%">
-              <PieChart>
-                <Pie dataKey="value" data={chartData} nameKey="name" outerRadius={120} label={({ name }) => name}>
-                  {chartData.map((_: any, idx: number) => <Cell key={idx} fill={COLORS[idx % COLORS.length]} />)}
-                </Pie>
-                <Tooltip formatter={(val: any, _name: any, entry: any) => `${entry.name}: ${rupee(Number(val))}`} />
-              </PieChart>
-            </ResponsiveContainer>
-          ) : <div>No chart data</div>}
+      <div className="card chart-card">
+        <h4>Total Spending: {rupee(total)}</h4>
+        <div style={{ width: "100%", height: 360 }}>
+          <ResponsiveContainer>
+            <PieChart>
+              <Pie dataKey="value" data={chartData} nameKey="name" outerRadius={120} label>
+                {chartData.map((_, idx: number) => <Cell key={idx} fill={COLORS[idx % COLORS.length]} />)}
+              </Pie>
+              <Tooltip formatter={(val:any) => rupee(Number(val))} />
+            </PieChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
       <div className="card">
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ fontWeight: 700 }}>⚠️ Unusual Transactions</div>
-          <div className="text-muted">Multiplier</div>
-          <input className="input small-input" type="number" value={multiplier} onChange={(e) => setMultiplier(Number(e.target.value))} />
-          <button className="btn btn-primary" onClick={fetchUnusual} disabled={loadingUnusual}>{loadingUnusual ? "Loading..." : "Apply"}</button>
+        <h4>⚠️ Unusual Transactions</h4>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <label style={{ marginRight: 6 }}>Multiplier</label>
+          <input type="number" min={1} value={multiplier} onChange={(e)=>setMultiplier(Number(e.target.value))} />
+          <button className="btn primary" onClick={checkUnusual}>Apply</button>
         </div>
 
-        <div style={{ marginTop: 16 }}>
-          {unusual.length === 0 ? <div className="text-muted">No unusual transactions found.</div> : (
-            <table className="table">
-              <thead>
-                <tr><th>Description</th><th>Amount</th><th>Date</th><th>Category</th></tr>
-              </thead>
-              <tbody>
-                {unusual.map((u) => (
-                  <tr key={u.id}>
-                    <td>{u.description}</td>
-                    <td>{rupee(Number(u.amount))}</td>
-                    <td>{u.transaction_date.slice(0, 10)}</td>
-                    <td>{u.category}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+        {unusual.length ? (
+          <table className="table" style={{ marginTop: 12 }}>
+            <thead>
+              <tr><th>Description</th><th>Amount</th><th>Date</th><th>Category</th></tr>
+            </thead>
+            <tbody>
+              {unusual.map((u:any)=>(
+                <tr key={u.id}>
+                  <td>{u.description}</td>
+                  <td>{rupee(Number(u.amount))}</td>
+                  <td>{new Date(u.transaction_date).toISOString().split("T")[0]}</td>
+                  <td>{u.category}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p style={{ marginTop: 12 }}>No unusual transactions found.</p>
+        )}
       </div>
     </div>
   );
-};
-
-export default Analytics;
+}

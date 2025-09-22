@@ -1,44 +1,43 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import api from "../api/client";
-import { useAuth } from "../contexts/AuthContext";
+import { useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
-import "../styles.css";
+import { login } from "../services/api";
 
-const Login: React.FC = () => {
-  const [email, setEmail] = useState("rajesh@example.com");
-  const [password, setPassword] = useState("123456");
-  const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
-  const navigate = useNavigate();
+export default function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const nav = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
     try {
-      const res = await api.post("/auth/login", { email, password });
-      const token = res.data?.token;
-      if (!token) throw new Error("No token returned");
-      login(token);
-      toast.success("Logged in");
-      navigate("/dashboard");
+      const res = await login(email, password);
+      if (res?.token) {
+        localStorage.setItem("token", res.token);
+        // optional name/email if backend returns them
+        if (res.user?.username) localStorage.setItem("name", res.user.username);
+        if (res.user?.email) localStorage.setItem("email", res.user.email);
+        toast.success("Logged in ✅");
+        nav("/dashboard");
+      } else {
+        toast.error("Login failed");
+      }
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Login failed");
-    } finally {
-      setLoading(false);
+      toast.error(err?.response?.data?.message || "Login error");
     }
-  };
+  }
 
   return (
     <div className="auth-page">
-      <form className="auth-card" onSubmit={handleSubmit}>
-        <h2>🔐 Login</h2>
-        <input type="email" placeholder="Email" className="auth-input" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <input type="password" placeholder="Password" className="auth-input" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        <button className="btn-primary" type="submit" disabled={loading}>{loading ? "Logging in..." : "Login"}</button>
+      <form className="card auth-card" onSubmit={submit}>
+        <h2>Sign In</h2>
+        <input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <button className="btn primary" type="submit">Login</button>
+        <div style={{ marginTop: 12, textAlign: "center" }}>
+          <Link to="/register">Register</Link>
+        </div>
       </form>
     </div>
   );
-};
-
-export default Login;
+}

@@ -1,103 +1,83 @@
 import React, { useEffect, useState } from "react";
-import api from "../api/client";
-import { toast } from "react-hot-toast";
-import { rupee } from "../helpers/format";
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+import { summary, fetchTransactions, fetchCategories } from "../services/api";
+import { rupee, dateOnly } from "../utils/format";
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#aa46be", "#f54291"];
 
-const Dashboard: React.FC = () => {
-  const [summary, setSummary] = useState<any>(null);
+export default function Dashboard() {
+  const [chartData, setChartData] = useState<{ name: string; value: number }[]>([]);
+  const [totals, setTotals] = useState<{ total_spending?: string; per_category?: any[] }>({});
   const [recent, setRecent] = useState<any[]>([]);
+  const [categoriesCount, setCategoriesCount] = useState<number>(0);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await api.get("/transactions/summary?period=monthly");
-        setSummary(res.data);
-      } catch {
-        toast.error("Failed to load summary ❌");
-      }
-
-      try {
-        const res2 = await api.get("/transactions");
-        const sorted = (res2.data || []).sort(
-          (a: any, b: any) => new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime()
-        );
-        setRecent(sorted.slice(0, 5));
-      } catch {
-        toast.error("Failed to load recent transactions ❌");
-      }
-    };
-    fetchData();
+    load();
   }, []);
 
-  const chartData =
-    summary?.per_category?.map((c: any) => ({
-      name: c.category,
-      value: parseFloat(c.total),
-    })) || [];
+  async function load() {
+    try {
+      const s = await summary("monthly");
+      setTotals(s);
+      const cats = s.per_category || [];
+      setChartData((cats as any[]).map((c: any) => ({ name: c.category, value: Number(c.total) })));
+      const tx = await fetchTransactions();
+      setRecent(tx.slice(0, 5));
+      const catList = await fetchCategories();
+      setCategoriesCount(catList.length);
+    } catch (err) {
+      // ignore for now
+    }
+  }
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-4">📊 Dashboard</h2>
+    <div className="page">
+      <h1 className="page-title">📊 Dashboard</h1>
 
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white p-4 rounded shadow">
-          <h3 className="font-semibold">Total Spending</h3>
-          <p className="text-xl">{rupee(Number(summary?.total_spending || 0))}</p>
+      <div className="grid-cards">
+        <div className="card">
+          <h4>Total Spending</h4>
+          <div className="stat">{rupee(Number(totals.total_spending || 0))}</div>
         </div>
-        <div className="bg-white p-4 rounded shadow">
-          <h3 className="font-semibold">Categories</h3>
-          <p className="text-xl">{summary?.per_category?.length || 0}</p>
+        <div className="card">
+          <h4>Categories</h4>
+          <div className="stat">{categoriesCount}</div>
         </div>
-        <div className="bg-white p-4 rounded shadow">
-          <h3 className="font-semibold">Transactions</h3>
-          <p className="text-xl">{recent.length}</p>
+        <div className="card">
+          <h4>Recent Transactions</h4>
+          <div className="stat">{recent.length}</div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
-        <div className="bg-white p-4 rounded shadow">
-          <h3 className="font-semibold mb-2">Spending by Category</h3>
-          {chartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
+      <div className="card chart-card">
+        <h4>Spending by Category (Monthly)</h4>
+        {chartData.length ? (
+          <div style={{ width: "100%", height: 340 }}>
+            <ResponsiveContainer>
               <PieChart>
-                <Pie
-                  dataKey="value"
-                  data={chartData}
-                  outerRadius={120}
-                  label={({ name }) => name}
-                >
-                  {chartData.map((_: any, idx: number) => (
+                <Pie dataKey="value" data={chartData} nameKey="name" outerRadius={120} label>
+                  {chartData.map((_, idx: number) => (
                     <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(val: any, _: any, entry: any) => `${entry.name}: ${rupee(val)}`} />
               </PieChart>
             </ResponsiveContainer>
-          ) : (
-            <p>No data</p>
-          )}
-        </div>
+          </div>
+        ) : (
+          <p>No data to show.</p>
+        )}
+      </div>
 
-        <div className="bg-white p-4 rounded shadow">
-          <h3 className="font-semibold mb-2">Recent Transactions</h3>
-          {recent.length > 0 ? (
-            <ul>
-              {recent.map((t) => (
-                <li key={t.id} className="border-b py-1">
-                  {t.description} - {rupee(Number(t.amount))}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>No transactions</p>
-          )}
-        </div>
+      <div className="card">
+        <h4>Recent Transactions</h4>
+        <ul>
+          {recent.map((r: any) => (
+            <li key={r.id}>
+              {r.description} - {rupee(Number(r.amount))} - {dateOnly(r.transaction_date)}
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
-};
-
-export default Dashboard;
+}

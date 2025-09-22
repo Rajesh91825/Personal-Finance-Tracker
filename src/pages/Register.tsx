@@ -1,41 +1,34 @@
 import React, { useState } from "react";
-import api from "../api/client";
+import { registerUser } from "../services/api";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import "../styles.css";
 
-const Register: React.FC = () => {
-  const [username, setUsername] = useState("");
+export default function Register() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const nav = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
     try {
-      await api.post("/auth/register", { username, email, password });
-      toast.success("Registered! Please login.");
-      navigate("/login");
+      const res = await registerUser(name, email, password);
+      toast.success(res?.message || "Registered ✅");
+      nav("/login");
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Registration failed");
-    } finally {
-      setLoading(false);
     }
-  };
+  }
 
   return (
     <div className="auth-page">
-      <form className="auth-card" onSubmit={handleSubmit}>
-        <h2>📝 Register</h2>
-        <input className="auth-input" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} required />
-        <input type="email" className="auth-input" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <input type="password" className="auth-input" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        <button className="btn-primary" type="submit" disabled={loading}>Register</button>
+      <form className="card auth-card" onSubmit={submit}>
+        <h2>Create Account</h2>
+        <input placeholder="Full Name" value={name} onChange={(e) => setName(e.target.value)} />
+        <input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <button className="btn success" type="submit">Register</button>
       </form>
     </div>
   );
-};
-
-export default Register;
+}
