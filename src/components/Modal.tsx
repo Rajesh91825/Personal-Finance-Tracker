@@ -7,9 +7,10 @@ interface ModalProps {
   onClose: () => void;
   children?: React.ReactNode;
   footer?: React.ReactNode;
+  width?: string;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, title, onClose, children, footer }) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, title, onClose, children, footer, width = "640px" }) => {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -21,8 +22,8 @@ const Modal: React.FC<ModalProps> = ({ isOpen, title, onClose, children, footer 
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" role="dialog" aria-modal="true" aria-label={title || "Modal"}>
-      <div className="modal-card">
+    <div className="modal-overlay" role="dialog" aria-modal="true">
+      <div className="modal-card" style={{ width }}>
         <div className="modal-header">
           <h3>{title}</h3>
           <button className="modal-close" onClick={onClose} aria-label="Close">✕</button>
