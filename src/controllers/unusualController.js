@@ -1,3 +1,4 @@
+// backend/controllers/unusualController.js
 const pool = require("../config/db");
 
 // Get unusual transactions
@@ -19,26 +20,36 @@ const getUnusualTransactions = async (req, res) => {
   }
 
   try {
-    // Get average spending
+    // Get average expense amount
     const avgResult = await pool.query(
-      "SELECT AVG(amount) AS avg_amount FROM transactions WHERE user_id=$1 AND transaction_date >= $2",
+      `SELECT AVG(t.amount) AS avg_amount
+       FROM transactions t
+       JOIN categories c ON t.category_id = c.id
+       WHERE t.user_id=$1
+         AND t.transaction_date >= $2
+         AND c.type = 'expense'`,
       [req.user.id, startDate]
     );
 
-    const threshold = avgResult.rows[0].avg_amount * factor;
+    const avgAmount = parseFloat(avgResult.rows[0].avg_amount || 0);
+    const threshold = avgAmount * factor;
 
-    // Get unusual transactions
+    // Get unusual expenses (only expense categories)
     const result = await pool.query(
-      "SELECT t.id, t.amount, t.description, t.transaction_date, c.name AS category " +
-      "FROM transactions t JOIN categories c ON t.category_id = c.id " +
-      "WHERE t.user_id=$1 AND t.transaction_date >= $2 AND t.amount > $3 " +
-      "ORDER BY t.amount DESC",
+      `SELECT t.id, t.amount, t.description, t.transaction_date, c.name AS category
+       FROM transactions t
+       JOIN categories c ON t.category_id = c.id
+       WHERE t.user_id=$1
+         AND t.transaction_date >= $2
+         AND c.type = 'expense'
+         AND t.amount > $3
+       ORDER BY t.amount DESC`,
       [req.user.id, startDate, threshold]
     );
 
     res.json({
       threshold,
-      unusual_transactions: result.rows
+      unusual_transactions: result.rows,
     });
   } catch (err) {
     console.error(err);
