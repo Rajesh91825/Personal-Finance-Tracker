@@ -12,11 +12,13 @@ import Transactions from "./pages/Transactions";
 import Categories from "./pages/Categories";
 import Analytics from "./pages/Analytics";
 import Export from "./pages/Export";
+import {Toaster} from "react-hot-toast";
 
 const App: React.FC = () => {
   return (
     <AuthProvider>
       <Router>
+        <Toaster position="top-right" />
         <Routes>
           <Route path="/" element={<IntroPage />} />
           <Route path="/login" element={<Login />} />
