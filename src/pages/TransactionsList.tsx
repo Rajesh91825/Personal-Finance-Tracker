@@ -1,8 +1,6 @@
+// src/pages/TransactionsList.tsx
 import React, { useEffect, useState } from "react";
 import api from "../services/api";
-import { toast } from "react-hot-toast";
-import Confirm from "../components/Confirm";
-import Modal from "../components/Modal";
 import { rupee } from "../utils/format";
 
 type Transaction = {
@@ -24,78 +22,56 @@ export default function TransactionsList() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [showModal, setShowModal] = useState(false);
-  const [editing, setEditing] = useState<Transaction | null>(null);
+  const [isIncome, setIsIncome] = useState(false);
+
   const [form, setForm] = useState({
     description: "",
     amount: "",
     date: "",
     category_id: "",
   });
-  const [confirmDelete, setConfirmDelete] = useState<Transaction | null>(null);
-
-  const load = async () => {
-    try {
-      const [tRes, cRes] = await Promise.all([
-        api.get("/transactions"),
-        api.get("/categories"),
-      ]);
-      setTransactions(tRes.data || []);
-      setCategories(cRes.data || []);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to fetch data ❌");
-    }
-  };
 
   useEffect(() => {
     load();
   }, []);
 
-  const handleSubmit = async () => {
-    try {
-      const payload = {
-        description: form.description,
-        amount: Number(form.amount),
-        transaction_date: form.date,
-        category_id: Number(form.category_id),
-      };
-
-      if (editing) {
-        await api.put(`/transactions/${editing.id}`, payload);
-        toast.success("Transaction updated ✅");
-      } else {
-        await api.post("/transactions", payload);
-        toast.success("Transaction added ✅");
-      }
-
-      setShowModal(false);
-      setEditing(null);
-      setForm({ description: "", amount: "", date: "", category_id: "" });
-      load();
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to save transaction ❌");
-    }
+  const load = async () => {
+    const [tRes, cRes] = await Promise.all([
+      api.get("/transactions"),
+      api.get("/categories"),
+    ]);
+    setTransactions(tRes.data || []);
+    setCategories(cRes.data || []);
   };
 
-  const remove = async (id: number) => {
-    try {
-      await api.delete(`/transactions/${id}`);
-      toast.success("Transaction deleted ✅");
-      load();
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to delete transaction ❌");
+  const handleSubmit = async () => {
+    if (!form.description || !form.amount || !form.date || !form.category_id) {
+      alert("Please fill all fields");
+      return;
     }
+    await api.post("/transactions", {
+      description: form.description,
+      amount: Number(form.amount),
+      transaction_date: form.date,
+      category_id: Number(form.category_id),
+    });
+    setShowModal(false);
+    setForm({ description: "", amount: "", date: "", category_id: "" });
+    setIsIncome(false);
+    load();
   };
 
   return (
     <div className="page">
-      <h2>💸 Transactions</h2>
-      <button className="btn primary" onClick={() => setShowModal(true)}>
+      <h2 className="text-2xl font-semibold mb-4">💸 Transactions</h2>
+      <button
+        className="mb-4 px-4 py-2 bg-blue-500 text-white rounded"
+        onClick={() => setShowModal(true)}
+      >
         + Add Transaction
       </button>
 
+      {/* Transactions Table */}
       <table className="table">
         <thead>
           <tr>
@@ -103,7 +79,6 @@ export default function TransactionsList() {
             <th>Amount</th>
             <th>Date</th>
             <th>Category</th>
-            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -112,114 +87,98 @@ export default function TransactionsList() {
               <td>{t.description}</td>
               <td
                 className={
-                  t.category_type === "income" ? "text-green-600" : "text-red-600"
+                  t.category_type === "income"
+                    ? "text-green-600"
+                    : "text-red-600"
                 }
               >
-                {t.category_type === "income"
-                  ? rupee(t.amount)
-                  : `-${rupee(t.amount)}`}
+                {t.category_type === "income" ? "+" : "-"}
+                {rupee(t.amount)}
               </td>
-              <td>{new Date(t.transaction_date).toISOString().slice(0, 10)}</td>
+              <td>{new Date(t.transaction_date).toLocaleDateString()}</td>
               <td>{t.category}</td>
-              <td>
-                <button
-                  className="btn small"
-                  onClick={() => {
-                    setEditing(t);
-                    setForm({
-                      description: t.description,
-                      amount: String(t.amount),
-                      date: new Date(t.transaction_date)
-                        .toISOString()
-                        .slice(0, 10),
-                      category_id: String(
-                        categories.find((c) => c.name === t.category)?.id || ""
-                      ),
-                    });
-                    setShowModal(true);
-                  }}
-                >
-                  Edit
-                </button>
-                <button
-                  className="btn danger small"
-                  onClick={() => setConfirmDelete(t)}
-                >
-                  Delete
-                </button>
-              </td>
             </tr>
           ))}
         </tbody>
       </table>
 
+      {/* Inline Modal (old style) */}
       {showModal && (
-        <Modal
-          open={showModal}
-          title={editing ? "Edit Transaction" : "Add Transaction"}
-          onClose={() => {
-            setShowModal(false);
-            setEditing(null);
-            setForm({ description: "", amount: "", date: "", category_id: "" });
-          }}
-          footer={
-            <>
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+            <h3 className="text-lg font-bold mb-4">Add Transaction</h3>
+
+            {/* Income/Expense toggle */}
+            <div className="flex items-center gap-4 mb-4">
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  checked={!isIncome}
+                  onChange={() => setIsIncome(false)}
+                />
+                Expense
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  checked={isIncome}
+                  onChange={() => setIsIncome(true)}
+                />
+                Income
+              </label>
+            </div>
+
+            {/* Form fields */}
+            <input
+              className="w-full p-2 border rounded mb-2"
+              type="text"
+              placeholder="Description"
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+            />
+            <input
+              className="w-full p-2 border rounded mb-2"
+              type="number"
+              placeholder="Amount"
+              value={form.amount}
+              onChange={(e) => setForm({ ...form, amount: e.target.value })}
+            />
+            <input
+              className="w-full p-2 border rounded mb-2"
+              type="date"
+              value={form.date}
+              onChange={(e) => setForm({ ...form, date: e.target.value })}
+            />
+            <select
+              className="w-full p-2 border rounded mb-4"
+              value={form.category_id}
+              onChange={(e) => setForm({ ...form, category_id: e.target.value })}
+            >
+              <option value="">Select category</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name} ({c.type})
+                </option>
+              ))}
+            </select>
+
+            {/* Footer buttons */}
+            <div className="flex justify-end gap-2">
               <button
-                className="btn outline"
-                onClick={() => {
-                  setShowModal(false);
-                  setEditing(null);
-                  setForm({ description: "", amount: "", date: "", category_id: "" });
-                }}
+                className="px-4 py-2 bg-gray-300 rounded"
+                onClick={() => setShowModal(false)}
               >
                 Cancel
               </button>
-              <button className="btn primary" onClick={handleSubmit}>
+              <button
+                className="px-4 py-2 bg-blue-500 text-white rounded"
+                onClick={handleSubmit}
+              >
                 Save
               </button>
-            </>
-          }
-        >
-          <input
-            type="text"
-            placeholder="Description"
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-          />
-          <input
-            type="number"
-            placeholder="Amount"
-            value={form.amount}
-            onChange={(e) => setForm({ ...form, amount: e.target.value })}
-          />
-          <input
-            type="date"
-            value={form.date}
-            onChange={(e) => setForm({ ...form, date: e.target.value })}
-          />
-          <select
-            value={form.category_id}
-            onChange={(e) => setForm({ ...form, category_id: e.target.value })}
-          >
-            <option value="">Select category</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name} ({c.type})
-              </option>
-            ))}
-          </select>
-        </Modal>
-      )}
-
-      {confirmDelete && (
-        <Confirm
-          open={!!confirmDelete}
-          title="Delete Transaction"
-          onCancel={() => setConfirmDelete(null)}
-          onConfirm={() => remove(confirmDelete.id)}
-        >
-          Are you sure you want to delete {confirmDelete.description}?
-        </Confirm>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

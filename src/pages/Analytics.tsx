@@ -1,6 +1,14 @@
+// src/pages/Analytics.tsx
 import React, { useEffect, useState } from "react";
 import api from "../services/api";
-import { PieChart, Pie, Tooltip, Cell } from "recharts";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
 
 type Transaction = {
   id: number;
@@ -11,80 +19,104 @@ type Transaction = {
 
 export default function Analytics() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await api.get("/transactions");
-      setTransactions(res.data || []);
+      try {
+        const res = await api.get("/transactions");
+        setTransactions(res.data || []);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchData();
   }, []);
 
-  const incomeData = Object.entries(
-    transactions
-      .filter((t) => t.category_type === "income")
-      .reduce((acc: any, t) => {
-        acc[t.category] = (acc[t.category] || 0) + t.amount;
-        return acc;
-      }, {})
-  ).map(([name, value]) => ({ name, value }));
+  const incomeByCategory: { name: string; value: number }[] = Object.values(
+  transactions
+    .filter((t) => t.category_type === "income")
+    .reduce((acc: Record<string, { name: string; value: number }>, t) => {
+      acc[t.category] = acc[t.category] || { name: t.category, value: 0 };
+      acc[t.category].value += Number(t.amount);
+      return acc;
+    }, {})
+);
 
-  const expenseData = Object.entries(
-    transactions
-      .filter((t) => t.category_type === "expense")
-      .reduce((acc: any, t) => {
-        acc[t.category] = (acc[t.category] || 0) + t.amount;
-        return acc;
-      }, {})
-  ).map(([name, value]) => ({ name, value }));
+const expenseByCategory: { name: string; value: number }[] = Object.values(
+  transactions
+    .filter((t) => t.category_type === "expense")
+    .reduce((acc: Record<string, { name: string; value: number }>, t) => {
+      acc[t.category] = acc[t.category] || { name: t.category, value: 0 };
+      acc[t.category].value += Number(t.amount);
+      return acc;
+    }, {})
+);
 
-  const COLORS = ["#8884d8", "#82ca9d", "#ff7f7f", "#ffc658", "#8dd1e1"];
+
+  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#AA336A"];
+
+  if (loading) return <p>Loading...</p>;
 
   return (
     <div className="page">
       <h2>📈 Analytics</h2>
-      <div className="grid grid-cols-2 gap-6">
-        <div className="bg-white p-4 rounded shadow">
-          <h3 className="text-green-600 font-semibold mb-2">Income Breakdown</h3>
-          {incomeData.length === 0 ? (
-            <p className="text-gray-500">No income data available</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        {/* Income Breakdown */}
+        <div className="p-4 border rounded">
+          <h3 className="text-lg font-semibold mb-2 text-green-600">Income Breakdown</h3>
+          {incomeByCategory.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={incomeByCategory}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={120}
+                  label
+                >
+                  {incomeByCategory.map((_, idx) => (
+                    <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
           ) : (
-            <PieChart width={300} height={250}>
-              <Pie
-                data={incomeData}
-                dataKey="value"
-                nameKey="name"
-                outerRadius={100}
-                label
-              >
-                {incomeData.map((_, index) => (
-                  <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
+            <p>No income data available</p>
           )}
         </div>
 
-        <div className="bg-white p-4 rounded shadow">
-          <h3 className="text-red-600 font-semibold mb-2">Expense Breakdown</h3>
-          {expenseData.length === 0 ? (
-            <p className="text-gray-500">No expense data available</p>
+        {/* Expense Breakdown */}
+        <div className="p-4 border rounded">
+          <h3 className="text-lg font-semibold mb-2 text-red-600">Expense Breakdown</h3>
+          {expenseByCategory.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={expenseByCategory}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={120}
+                  label
+                >
+                  {expenseByCategory.map((_, idx) => (
+                    <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
           ) : (
-            <PieChart width={300} height={250}>
-              <Pie
-                data={expenseData}
-                dataKey="value"
-                nameKey="name"
-                outerRadius={100}
-                label
-              >
-                {expenseData.map((_, index) => (
-                  <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
+            <p>No expense data available</p>
           )}
         </div>
       </div>
