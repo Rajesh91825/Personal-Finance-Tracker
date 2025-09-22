@@ -32,9 +32,9 @@ All protected endpoints require the **JWT token** in headers:
 
 | Endpoint | Method | Description | Request Body | Response |
 |----------|--------|------------|--------------|----------|
-| `/categories` | GET | List all categories | - | `[{"id":1,"name":"Food"},{"id":2,"name":"Rent"}]` |
-| `/categories` | POST | Add a category | `{ "name": "Utilities" }` | `{ "message": "Category added ✅" }` |
-| `/categories/:id` | PUT | Update a category | `{ "name": "Groceries" }` | `{ "message": "Category updated ✅" }` |
+| `/categories` | GET | List all categories | - | `[{"id":1,"name":"Food","type":"expense"},{"id":2,"name":"Rent","type":"expense"}]` |
+| `/categories` | POST | Add a category | `{ "name": "Utilities", "type":"expense" }` | `{ "message": "Category added ✅" }` |
+| `/categories/:id` | PUT | Update a category | `{ "name": "Groceries","type":"expense" }` | `{ "message": "Category updated ✅" }` |
 | `/categories/:id` | DELETE | Remove a category | - | `{ "message": "Category deleted ✅" }` |
 
 ---

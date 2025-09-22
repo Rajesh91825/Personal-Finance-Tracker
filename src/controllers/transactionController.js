@@ -1,11 +1,15 @@
 const pool = require("../config/db");
 
-// Get all transactions for a user
+// Get all transactions of a user (with category type)
 const getTransactions = async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT t.id, t.amount, t.description, t.transaction_date, c.name as category " +
-      "FROM transactions t JOIN categories c ON t.category_id = c.id WHERE t.user_id = $1 ORDER BY t.transaction_date DESC",
+      `SELECT t.id, t.description, t.amount, t.transaction_date,
+              c.id as category_id, c.name as category, c.type as category_type
+       FROM transactions t
+       JOIN categories c ON t.category_id = c.id
+       WHERE t.user_id = $1
+       ORDER BY t.transaction_date DESC`,
       [req.user.id]
     );
     res.json(result.rows);
@@ -20,9 +24,14 @@ const getFilteredTransactions = async (req, res) => {
   const { startDate, endDate, category_id, minAmount, maxAmount } = req.query;
 
   try {
-    let query = "SELECT t.id, t.amount, t.description, t.transaction_date, c.name as category " +
-                "FROM transactions t JOIN categories c ON t.category_id = c.id " +
-                "WHERE t.user_id = $1";
+    let query = `
+      SELECT t.id, t.amount, t.description, t.transaction_date,
+            c.id as category_id, c.name as category, c.type as category_type
+      FROM transactions t
+      JOIN categories c ON t.category_id = c.id
+      WHERE t.user_id = $1
+    `;
+
     let values = [req.user.id];
     let idx = 2;
 

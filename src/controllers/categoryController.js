@@ -13,10 +13,11 @@ const getCategories = async (req, res) => {
 
 // Add a new category
 const addCategory = async (req, res) => {
-  const { name } = req.body;
+  const name = req.body.name;
+  const type = req.body.type; // 'income' or 'expense'
   if (!name) return res.status(400).json({ error: "Category name required ❌" });
   try {
-    await pool.query("INSERT INTO categories (name) VALUES ($1)", [name]);
+    await pool.query("INSERT INTO categories (name,type) VALUES ($1,$2)", [name,type]);
     res.status(201).json({ message: "Category added ✅" });
   } catch (err) {
     console.error(err);
@@ -27,10 +28,11 @@ const addCategory = async (req, res) => {
 // Update a category
 const updateCategory = async (req, res) => {
   const { id } = req.params;
-  const { name } = req.body;
+  const name = req.body.name;
+  const type = req.body.type; // 'income' or 'expense'
   if (!name) return res.status(400).json({ error: "Category name required ❌" });
   try {
-    await pool.query("UPDATE categories SET name=$1 WHERE id=$2", [name, id]);
+    await pool.query("UPDATE categories SET name=$1, type=$2 WHERE id=$3", [name, type, id]);
     res.json({ message: "Category updated ✅" });
   } catch (err) {
     console.error(err);
