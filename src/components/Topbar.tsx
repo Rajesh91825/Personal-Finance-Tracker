@@ -1,30 +1,32 @@
 import React from "react";
-import "../styles.css";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
-type Props = {
-  user?: { name?: string; email?: string };
-  onLogout?: () => void;
-};
+const Topbar: React.FC = () => {
+  const { token, logout } = useAuth();
+  const navigate = useNavigate();
 
-export default function Topbar({ user, onLogout }: Props) {
-  const initial =
-    user?.name?.charAt(0).toUpperCase() ||
-    user?.email?.charAt(0).toUpperCase() ||
-    "G"; // fallback to "G" for Guest
+  const handleLogout = () => {
+    logout();
+    try {
+      localStorage.removeItem("token");
+    } catch {}
+    navigate("/login", { replace: true });
+  };
 
   return (
-    <div className="topbar">
-      <div className="topbar-left">Welcome 👋</div>
-      <div className="flex-center gap">
-        <div className="avatar">{initial}</div>
-        <div className="user-info">
-          <span className="user-name">{user?.name || "Guest"}</span>
-          <span className="user-email">{user?.email || ""}</span>
-        </div>
-        <button className="btn outline" onClick={onLogout}>
+    <div className="flex items-center justify-between px-6 py-3 bg-white border-b shadow-sm">
+      <h1 className="text-xl font-semibold text-gray-800">FinTrack</h1>
+      {token && (
+        <button
+          onClick={handleLogout}
+          className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
+        >
           Logout
         </button>
-      </div>
+      )}
     </div>
   );
-}
+};
+
+export default Topbar;

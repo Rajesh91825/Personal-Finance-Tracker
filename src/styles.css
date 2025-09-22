@@ -1,3 +1,4 @@
+
 :root{
   --bg:#f4f7fb;
   --card:#fff;
@@ -186,3 +187,7 @@ html,body,#root{height:100%;margin:0;background:var(--bg);color:#222;}
   justify-content: center;
   font-size: 14px;
 }
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

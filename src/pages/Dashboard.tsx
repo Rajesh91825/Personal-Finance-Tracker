@@ -1,93 +1,132 @@
 import React, { useEffect, useState } from "react";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
-import { toast } from "react-hot-toast";
-import api from "../services/api";
-import { rupee } from "../utils/format";
-import "../styles.css";
+import api from "../api/client";
+import { useNavigate } from "react-router-dom";
+import { Summary, Transaction } from "../types";
 
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#aa46be", "#f54291"];
-
-export default function Dashboard() {
-  const [chartData, setChartData] = useState<any[]>([]);
-  const [total, setTotal] = useState<number>(0);
-  const [recent, setRecent] = useState<any[]>([]);
-  const [categories, setCategories] = useState<number>(0);
+const DashboardPage: React.FC = () => {
+  const [summary, setSummary] = useState<Summary | null>(null);
+  const [period, setPeriod] = useState<"monthly" | "weekly">("monthly");
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    async function load() {
+    (async () => {
       try {
-        const summary = await api.get("/transactions/summary?period=monthly");
-        const trans = await api.get("/transactions");
-        const cats = await api.get("/categories");
-
-        setTotal(Number(summary.data?.total_spending) || 0);
-        setChartData(
-          summary.data?.per_category.map((c: any) => ({
-            name: c.category,
-            value: Number(c.total) || 0,
-          })) || []
-        );
-        setRecent(trans.data?.slice(0, 5) || []);
-        setCategories(cats.data?.length || 0);
-      } catch (err) {
-        console.error(err);
-        toast.error("Failed to load dashboard data");
+        const res = await api.get("/transactions/summary", { params: { period } });
+        setSummary(res.data);
+      } catch {
+        setSummary(null);
       }
-    }
-    load();
+    })();
+  }, [period]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await api.get("/transactions");
+        const list: Transaction[] = Array.isArray(res.data) ? res.data : [];
+        setRecentTransactions(list.slice(0, 5));
+      } catch {
+        setRecentTransactions([]);
+      }
+    })();
   }, []);
 
-  return (
-    <div className="page dashboard-page">
-      <h2>📊 Dashboard</h2>
-      <div className="stats-row">
-        <div className="stat-card">Total Spending {rupee(total)}</div>
-        <div className="stat-card">Categories {categories}</div>
-        <div className="stat-card">Recent Transactions {recent.length}</div>
-      </div>
+  const goToTransactions = () => navigate("/transactions");
 
-      <div className="card">
-        <h3>Spending by Category (Monthly)</h3>
-        <div style={{ width: "100%", height: 300 }}>
-          <ResponsiveContainer>
-            <PieChart>
-              <Pie
-                dataKey="value"
-                data={chartData}
-                nameKey="name"
-                outerRadius={100}
-                label={(entry) => entry.name}
-              >
-                {chartData.map((_, idx: number) => (
-                  <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip formatter={(val: any) => rupee(Number(val))} />
-            </PieChart>
-          </ResponsiveContainer>
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Dashboard</h1>
+        <div className="flex items-center gap-3">
+          <select
+            value={period}
+            onChange={(e) => setPeriod(e.target.value as any)}
+            className="border px-2 py-1 rounded"
+          >
+            <option value="monthly">Monthly</option>
+            <option value="weekly">Weekly</option>
+          </select>
+          <button
+            onClick={goToTransactions}
+            className="px-3 py-1 bg-blue-600 text-white rounded"
+          >
+            View all
+          </button>
         </div>
       </div>
 
-      <div className="card">
-        <h3>Recent Transactions</h3>
-        {recent.length === 0 ? (
-          <p>No data to show.</p>
-        ) : (
-          <ul>
-            {recent.map((r) => (
-              <li key={r.id}>
-                {r.description} — {rupee(r.amount)}
-              </li>
-            ))}
-          </ul>
-        )}
+      {/* Summary */}
+      <div className="bg-white p-6 rounded shadow">
+        <h2 className="text-lg font-semibold mb-2">Total spending</h2>
+        <div className="text-3xl font-bold mb-4">
+          {summary ? `₹ ${summary.total_spending}` : "—"}
+        </div>
+
+        <h3 className="font-semibold mb-2">By category</h3>
+        <table className="w-full border">
+          <tbody>
+            {summary?.per_category?.length ? (
+              summary.per_category.map((p, idx) => (
+                <tr key={idx} className="border-b">
+                  <td className="py-2 px-3">{p.category}</td>
+                  <td className="py-2 px-3 text-right">₹ {p.total}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td className="py-3 text-gray-500">No category data</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Recent Transactions */}
+      <div className="bg-white p-6 rounded shadow">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold">Recent Transactions</h3>
+          <small className="text-sm text-gray-500">Latest 5</small>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b">
+                <th className="py-2">Description</th>
+                <th className="py-2">Amount</th>
+                <th className="py-2">Date</th>
+                <th className="py-2">Category</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentTransactions.length ? (
+                recentTransactions.map((t) => (
+                  <tr key={String(t.id ?? Math.random())} className="border-b hover:bg-gray-50">
+                    <td className="py-2">{t.description}</td>
+                    <td className="py-2">₹{t.amount}</td>
+                    <td className="py-2">
+                      {t.transaction_date
+                        ? new Date(t.transaction_date).toLocaleDateString()
+                        : "—"}
+                    </td>
+                    <td className="py-2">{t.category ?? "—"}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={4} className="py-6 text-center text-gray-500">
+                    No recent transactions
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
-}
+};
+
+export default DashboardPage;

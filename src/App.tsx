@@ -5,7 +5,7 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
-import Transactions from "./pages/Transactions";
+import Transactions from "./pages/TransactionsList";
 import Categories from "./pages/Categories";
 import Analytics from "./pages/Analytics";
 import Export from "./pages/Export";
