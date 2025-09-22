@@ -20,9 +20,7 @@ function App() {
       <Route
         path="/"
         element={
-          <AuthLayout>
             <Landing />
-          </AuthLayout>
         }
       />
       <Route
