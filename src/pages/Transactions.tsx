@@ -1,163 +1,208 @@
 import React, { useEffect, useState } from "react";
-import {
-  fetchTransactions,
-  fetchCategories,
-  addTransaction,
-  deleteTransaction,
-  updateTransaction,
-  fetchFilteredTransactions,
-} from "../services/api";
+import { toast } from "react-hot-toast";
+import api from "../services/api";
 import Modal from "../components/Modal";
-import toast from "react-hot-toast";
-import { rupee, dateOnly } from "../utils/format";
+import Confirm from "../components/Confirm";
+import { rupee } from "../utils/format";
+import "../styles.css";
+
+type Transaction = {
+  id: number;
+  description: string;
+  amount: number;
+  transaction_date: string;
+  category: string;
+};
 
 export default function Transactions() {
-  const [transactions, setTransactions] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [showModal, setShowModal] = useState(false);
-  const [editing, setEditing] = useState<any | null>(null);
+  const [editing, setEditing] = useState<Transaction | null>(null);
+  const [form, setForm] = useState({
+    description: "",
+    amount: "",
+    date: "",
+    category_id: "",
+  });
+  const [confirmDelete, setConfirmDelete] = useState<Transaction | null>(null);
 
-  // form state
-  const [desc, setDesc] = useState("");
-  const [amount, setAmount] = useState("");
-  const [date, setDate] = useState("");
-  const [catId, setCatId] = useState<number | "">("");
+  const load = async () => {
+    try {
+      const [tRes, cRes] = await Promise.all([
+        api.get("/transactions"),
+        api.get("/categories"),
+      ]);
+      setTransactions(tRes.data || []);
+      setCategories(cRes.data || []);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to fetch transactions");
+    }
+  };
 
   useEffect(() => {
-    loadAll();
+    load();
   }, []);
 
-  async function loadAll() {
+  const handleSubmit = async () => {
     try {
-      const tx = await fetchTransactions();
-      setTransactions(tx);
-      const c = await fetchCategories();
-      setCategories(c);
-    } catch (err) {}
-  }
+      const payload = {
+        description: form.description,
+        amount: Number(form.amount),
+        transaction_date: form.date,
+        category_id: Number(form.category_id),
+      };
 
-  function openAdd() {
-    setEditing(null);
-    setDesc("");
-    setAmount("");
-    setDate("");
-    setCatId("");
-    setShowModal(true);
-  }
-
-  function openEdit(tx: any) {
-    setEditing(tx);
-    setDesc(tx.description);
-    setAmount(String(tx.amount));
-    setDate(dateOnly(tx.transaction_date));
-    setCatId(tx.category_id || "");
-    setShowModal(true);
-  }
-
-  async function handleSubmit(e?: React.FormEvent) {
-    if (e) e.preventDefault();
-    if (!desc || !amount || !date || !catId) return toast.error("Please fill all fields");
-    try {
       if (editing) {
-        await updateTransaction(editing.id, { amount: Number(amount), description: desc, transaction_date: date, category_id: catId });
-        toast.success("Transaction updated ✅");
+        await api.put(`/transactions/${editing.id}`, payload);
+        toast.success("Transaction updated");
       } else {
-        await addTransaction({ amount: Number(amount), description: desc, transaction_date: date, category_id: catId });
-        toast.success("Transaction added ✅");
+        await api.post("/transactions", payload);
+        toast.success("Transaction added");
       }
       setShowModal(false);
-      loadAll();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Error");
+      setEditing(null);
+      setForm({ description: "", amount: "", date: "", category_id: "" });
+      load();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to save transaction");
     }
-  }
+  };
 
-  async function handleDelete(id: number) {
-    if (!window.confirm("Delete transaction?")) return;
+  const remove = async (id: number) => {
     try {
-      await deleteTransaction(id);
-      toast.success("Transaction deleted ✅");
-      loadAll();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Error");
+      await api.delete(`/transactions/${id}`);
+      toast.success("Transaction deleted");
+      load();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete transaction");
     }
-  }
+  };
 
   return (
     <div className="page">
-      <h1 className="page-title">💸 Transactions</h1>
+      <h2>💸 Transactions</h2>
+      <button className="btn primary" onClick={() => setShowModal(true)}>
+        + Add Transaction
+      </button>
 
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
-        <button className="btn primary" onClick={openAdd}>+ Add Transaction</button>
-      </div>
-
-      <div className="card">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Description</th>
-              <th>Amount</th>
-              <th>Date</th>
-              <th>Category</th>
-              <th>Actions</th>
+      <table className="table">
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>Amount</th>
+            <th>Date</th>
+            <th>Category</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {transactions.map((t) => (
+            <tr key={t.id}>
+              <td>{t.description}</td>
+              <td>{rupee(t.amount)}</td>
+              <td>{new Date(t.transaction_date).toISOString().slice(0, 10)}</td>
+              <td>{t.category}</td>
+              <td>
+                <button
+                  className="btn small"
+                  onClick={() => {
+                    setEditing(t);
+                    setForm({
+                      description: t.description,
+                      amount: String(t.amount),
+                      date: new Date(t.transaction_date)
+                        .toISOString()
+                        .slice(0, 10),
+                      category_id: String(categories.find((c) => c.name === t.category)?.id || ""),
+                    });
+                    setShowModal(true);
+                  }}
+                >
+                  Edit
+                </button>
+                <button
+                  className="btn danger small"
+                  onClick={() => setConfirmDelete(t)}
+                >
+                  Delete
+                </button>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {transactions.map((t) => (
-              <tr key={t.id}>
-                <td>{t.description}</td>
-                <td>{rupee(Number(t.amount))}</td>
-                <td>{dateOnly(t.transaction_date)}</td>
-                <td>{t.category}</td>
-                <td>
-                  <button className="btn outline small" onClick={() => openEdit(t)}>Edit</button>{" "}
-                  <button className="btn danger small" onClick={() => handleDelete(t.id)}>Delete</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          ))}
+        </tbody>
+      </table>
 
       {showModal && (
-        // <Modal title={editing ? "Edit Transaction" : "Add Transaction"} onClose={() => setShowModal(false)} footer={
-        //   <>
-        //     <button className="btn outline" onClick={() => setShowModal(false)}>Cancel</button>
-        //     <button className="btn primary" onClick={() => handleSubmit()}>Save</button>
-        //   </>
-        // }>
-        //   <form onSubmit={(e)=>{ e.preventDefault(); handleSubmit(); }}>
-        //     <input placeholder="Description" value={desc} onChange={(e)=>setDesc(e.target.value)} />
-        //     <input placeholder="Amount" value={amount} onChange={(e)=>setAmount(e.target.value)} />
-        //     <input type="date" value={date} onChange={(e)=>setDate(e.target.value)} />
-        //     <select value={catId} onChange={(e)=>setCatId(Number(e.target.value))}>
-        //       <option value="">Select category</option>
-        //       {categories.map((c)=> <option key={c.id} value={c.id}>{c.name}</option>)}
-        //     </select>
-        //   </form>
-        // </Modal>
         <Modal
-          open={showModal}   // ✅ pass it here
+          open={showModal}
           title={editing ? "Edit Transaction" : "Add Transaction"}
-          onClose={() => setShowModal(false)}
+          onClose={() => {
+            setShowModal(false);
+            setEditing(null);
+            setForm({ description: "", amount: "", date: "", category_id: "" });
+          }}
           footer={
             <>
-              <button className="btn outline" onClick={() => setShowModal(false)}>Cancel</button>
-              <button className="btn primary" onClick={() => handleSubmit()}>Save</button>
+              <button
+                className="btn outline"
+                onClick={() => {
+                  setShowModal(false);
+                  setEditing(null);
+                  setForm({ description: "", amount: "", date: "", category_id: "" });
+                }}
+              >
+                Cancel
+              </button>
+              <button className="btn primary" onClick={handleSubmit}>
+                Save
+              </button>
             </>
           }
         >
-          <form onSubmit={(e)=>{ e.preventDefault(); handleSubmit(); }}>
-            <input placeholder="Description" value={desc} onChange={(e)=>setDesc(e.target.value)} />
-            <input placeholder="Amount" value={amount} onChange={(e)=>setAmount(e.target.value)} />
-            <input type="date" value={date} onChange={(e)=>setDate(e.target.value)} />
-            <select value={catId} onChange={(e)=>setCatId(Number(e.target.value))}>
-              <option value="">Select category</option>
-              {categories.map((c)=> <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-          </form>
+          <input
+            type="text"
+            placeholder="Description"
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+          />
+          <input
+            type="number"
+            placeholder="Amount"
+            value={form.amount}
+            onChange={(e) => setForm({ ...form, amount: e.target.value })}
+          />
+          <input
+            type="date"
+            value={form.date}
+            onChange={(e) => setForm({ ...form, date: e.target.value })}
+          />
+          <select
+            value={form.category_id}
+            onChange={(e) => setForm({ ...form, category_id: e.target.value })}
+          >
+            <option value="">Select category</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
         </Modal>
+      )}
 
+      {confirmDelete && (
+        <Confirm
+          open={!!confirmDelete}
+          title="Delete Transaction"
+          onCancel={() => setConfirmDelete(null)}
+          onConfirm={() => remove(confirmDelete.id)}
+        >
+          Are you sure you want to delete {confirmDelete.description}?
+        </Confirm>
       )}
     </div>
   );

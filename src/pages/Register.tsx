@@ -1,34 +1,54 @@
 import React, { useState } from "react";
-import { registerUser } from "../services/api";
-import { useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
+import api from "../services/api";
+import AuthLayout from "../layouts/AuthLayout";
+import "../styles.css";
 
 export default function Register() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const nav = useNavigate();
+  const navigate = useNavigate();
+  const [form, setForm] = useState({ name: "", email: "", password: "" });
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
+  const handleRegister = async () => {
     try {
-      const res = await registerUser(name, email, password);
-      toast.success(res?.message || "Registered ✅");
-      nav("/login");
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Registration failed");
+      await api.post("/auth/register", form);
+      toast.success("Registered! Please log in.");
+      navigate("/login");
+    } catch (err) {
+      console.error(err);
+      toast.error("Registration failed");
     }
-  }
+  };
 
   return (
-    <div className="auth-page">
-      <form className="card auth-card" onSubmit={submit}>
+    <AuthLayout>
+      <div className="auth-card">
         <h2>Create Account</h2>
-        <input placeholder="Full Name" value={name} onChange={(e) => setName(e.target.value)} />
-        <input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-        <button className="btn success" type="submit">Register</button>
-      </form>
-    </div>
+        <input
+          type="text"
+          placeholder="Full Name"
+          value={form.name}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+        />
+        <input
+          type="email"
+          placeholder="Email"
+          value={form.email}
+          onChange={(e) => setForm({ ...form, email: e.target.value })}
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={form.password}
+          onChange={(e) => setForm({ ...form, password: e.target.value })}
+        />
+        <button className="btn success" onClick={handleRegister}>
+          Register
+        </button>
+        <p className="auth-alt">
+          Already have an account? <Link to="/login">Login</Link>
+        </p>
+      </div>
+    </AuthLayout>
   );
 }

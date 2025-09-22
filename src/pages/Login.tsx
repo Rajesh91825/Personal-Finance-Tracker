@@ -1,43 +1,49 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import toast from "react-hot-toast";
-import { login } from "../services/api";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
+import api from "../services/api";
+import AuthLayout from "../layouts/AuthLayout";
+import "../styles.css";
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const nav = useNavigate();
+  const navigate = useNavigate();
+  const [form, setForm] = useState({ email: "", password: "" });
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
+  const handleLogin = async () => {
     try {
-      const res = await login(email, password);
-      if (res?.token) {
-        localStorage.setItem("token", res.token);
-        // optional name/email if backend returns them
-        if (res.user?.username) localStorage.setItem("name", res.user.username);
-        if (res.user?.email) localStorage.setItem("email", res.user.email);
-        toast.success("Logged in ✅");
-        nav("/dashboard");
-      } else {
-        toast.error("Login failed");
-      }
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Login error");
+      const res = await api.post("/auth/login", form);
+      localStorage.setItem("token", res.data.token);
+      toast.success("Logged in!");
+      navigate("/dashboard");
+    } catch (err) {
+      console.error(err);
+      toast.error("Login failed");
     }
-  }
+  };
 
   return (
-    <div className="auth-page">
-      <form className="card auth-card" onSubmit={submit}>
+    <AuthLayout>
+      <div className="auth-card">
         <h2>Sign In</h2>
-        <input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-        <button className="btn primary" type="submit">Login</button>
-        <div style={{ marginTop: 12, textAlign: "center" }}>
-          <Link to="/register">Register</Link>
-        </div>
-      </form>
-    </div>
+        <input
+          type="email"
+          placeholder="Email"
+          value={form.email}
+          onChange={(e) => setForm({ ...form, email: e.target.value })}
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={form.password}
+          onChange={(e) => setForm({ ...form, password: e.target.value })}
+        />
+        <button className="btn primary" onClick={handleLogin}>
+          Login
+        </button>
+        <p className="auth-alt">
+          Don’t have an account? <Link to="/register">Register</Link>
+        </p>
+      </div>
+    </AuthLayout>
   );
 }

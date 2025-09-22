@@ -1,10 +1,9 @@
-export function rupee(n: number | string) {
-  const num = typeof n === "string" ? Number(n) || 0 : n || 0;
-  return "₹" + num.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-export function dateOnly(raw: string | Date) {
-  const d = new Date(raw);
-  if (isNaN(d.getTime())) return "";
-  return d.toISOString().split("T")[0];
-}
+export const rupee = (val: number | string) => {
+  const num = typeof val === "string" ? Number(val) : val;
+  if (Number.isNaN(num)) return "₹0.00";
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 2,
+  }).format(num);
+};

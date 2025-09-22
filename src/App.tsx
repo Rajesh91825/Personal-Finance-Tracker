@@ -1,76 +1,90 @@
 import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
-import Topbar from "./components/Topbar";
-import Sidebar from "./components/Sidebar";
+import { Routes, Route } from "react-router-dom";
+
+import Landing from "./pages/Landing";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Transactions from "./pages/Transactions";
 import Categories from "./pages/Categories";
 import Analytics from "./pages/Analytics";
-import ExportPage from "./pages/Export";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import { getToken } from "./services/api";
+import Export from "./pages/Export";
 
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const token = getToken();
-  if (!token) return <Navigate to="/login" replace />;
-  return <>{children}</>;
-};
+import MainLayout from "./layouts/MainLayout";
+import AuthLayout from "./layouts/AuthLayout";
 
-export default function App() {
+function App() {
   return (
-    <div className="app">
-      <Sidebar />
-      <div className="main">
-        <Topbar />
-        <div className="content">
-          <Routes>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/transactions"
-              element={
-                <ProtectedRoute>
-                  <Transactions />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/categories"
-              element={
-                <ProtectedRoute>
-                  <Categories />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/analytics"
-              element={
-                <ProtectedRoute>
-                  <Analytics />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/export"
-              element={
-                <ProtectedRoute>
-                  <ExportPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-          </Routes>
-        </div>
-      </div>
-    </div>
+    <Routes>
+      {/* Public / Auth Routes */}
+      <Route
+        path="/"
+        element={
+          <AuthLayout>
+            <Landing />
+          </AuthLayout>
+        }
+      />
+      <Route
+        path="/login"
+        element={
+          <AuthLayout>
+            <Login />
+          </AuthLayout>
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          <AuthLayout>
+            <Register />
+          </AuthLayout>
+        }
+      />
+
+      {/* Protected Routes */}
+      <Route
+        path="/dashboard"
+        element={
+          <MainLayout>
+            <Dashboard />
+          </MainLayout>
+        }
+      />
+      <Route
+        path="/transactions"
+        element={
+          <MainLayout>
+            <Transactions />
+          </MainLayout>
+        }
+      />
+      <Route
+        path="/categories"
+        element={
+          <MainLayout>
+            <Categories />
+          </MainLayout>
+        }
+      />
+      <Route
+        path="/analytics"
+        element={
+          <MainLayout>
+            <Analytics />
+          </MainLayout>
+        }
+      />
+      <Route
+        path="/export"
+        element={
+          <MainLayout>
+            <Export />
+          </MainLayout>
+        }
+      />
+    </Routes>
   );
 }
+
+export default App;

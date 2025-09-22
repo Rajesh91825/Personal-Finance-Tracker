@@ -1,85 +1,24 @@
-// service wrapper - uses src/api/client.ts axios instance
+// src/services/api.ts
 import client from "../api/client";
 
-export function getToken() {
-  try {
-    return localStorage.getItem("token") || "";
-  } catch {
-    return "";
-  }
-}
+// keep default export (so pages can still do `api.get(...)`)
+export default client;
 
-export async function login(email: string, password: string) {
-  const res = await client.post("/auth/login", { email, password });
-  return res.data;
-}
-
-export async function registerUser(name: string, email: string, password: string) {
-  const res = await client.post("/auth/register", { username: name, email, password });
-  return res.data;
-}
-
-export async function fetchTransactions(params?: Record<string, any>) {
-  const res = await client.get("/transactions", { params });
-  return res.data;
-}
-
-export async function fetchFilteredTransactions(params?: Record<string, any>) {
-  const res = await client.get("/transactions/filtered", { params });
-  return res.data;
-}
-
-export async function addTransaction(payload: any) {
-  const res = await client.post("/transactions", payload);
-  return res.data;
-}
-
-export async function updateTransaction(id: number, payload: any) {
-  const res = await client.put(`/transactions/${id}`, payload);
-  return res.data;
-}
-
-export async function deleteTransaction(id: number) {
-  const res = await client.delete(`/transactions/${id}`);
-  return res.data;
-}
-
-export async function fetchCategories() {
-  const res = await client.get("/categories");
-  return res.data;
-}
-
-export async function addCategory(payload: { name: string }) {
-  const res = await client.post("/categories", payload);
-  return res.data;
-}
-
-export async function updateCategory(id: number, payload: { name: string }) {
-  const res = await client.put(`/categories/${id}`, payload);
-  return res.data;
-}
-
-export async function deleteCategory(id: number) {
-  const res = await client.delete(`/categories/${id}`);
-  return res.data;
-}
-
-export async function summary(period: "weekly" | "monthly" = "monthly") {
-  const res = await client.get("/transactions/summary", { params: { period } });
-  return res.data;
-}
-
-export async function unusualTransactions(period = "monthly", multiplier = 2) {
-  const res = await client.get("/transactions/unusual", { params: { period, multiplier } });
-  return res.data;
-}
-
-export async function exportCsv() {
-  const res = await client.get("/export/csv", { responseType: "blob" });
-  return res.data;
-}
-
-export async function exportPdf() {
-  const res = await client.get("/export/pdf", { responseType: "blob" });
-  return res.data;
-}
+// also export helper wrappers if you want cleaner usage elsewhere
+export const getDashboard = () => client.get("/transactions/summary?period=monthly");
+export const getTransactions = () => client.get("/transactions");
+export const getCategories = () => client.get("/categories");
+export const createTransaction = (data: any) => client.post("/transactions", data);
+export const updateTransaction = (id: number, data: any) =>
+  client.put(`/transactions/${id}`, data);
+export const deleteTransaction = (id: number) => client.delete(`/transactions/${id}`);
+export const createCategory = (data: any) => client.post("/categories", data);
+export const updateCategory = (id: number, data: any) =>
+  client.put(`/categories/${id}`, data);
+export const deleteCategory = (id: number) => client.delete(`/categories/${id}`);
+export const getUnusualTransactions = (multiplier: number) =>
+  client.get(`/transactions/unusual?multiplier=${multiplier}`);
+export const exportCsv = () =>
+  client.get("/export/csv", { responseType: "blob" });
+export const exportPdf = () =>
+  client.get("/export/pdf", { responseType: "blob" });

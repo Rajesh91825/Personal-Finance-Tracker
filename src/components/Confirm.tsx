@@ -1,32 +1,44 @@
 import React from "react";
 import Modal from "./Modal";
 
-interface ConfirmProps {
-  open: boolean;
+type Props = {
+  open?: boolean;
   title?: string;
-  message?: string;
-  onConfirm: () => void;
   onCancel: () => void;
-  confirmLabel?: string;
-  cancelLabel?: string;
-}
+  onConfirm: () => void;
+  children?: React.ReactNode;
+};
 
-const Confirm: React.FC<ConfirmProps> = ({ open, title = "Confirm", message = "Are you sure?", onConfirm, onCancel, confirmLabel = "Yes", cancelLabel = "Cancel" }) => {
+export default function Confirm({
+  open,
+  title = "Confirm",
+  onCancel,
+  onConfirm,
+  children,
+}: Props) {
   return (
     <Modal
       open={open}
-      onClose={onCancel}
       title={title}
+      onClose={onCancel}
       footer={
         <>
-          <button className="btn-secondary" onClick={onCancel}>{cancelLabel}</button>
-          <button className="btn-danger" onClick={onConfirm}>{confirmLabel}</button>
+          <button className="btn outline" onClick={onCancel}>
+            Cancel
+          </button>
+          <button
+            className="btn danger"
+            onClick={() => {
+              onConfirm();
+              onCancel();
+            }}
+          >
+            Delete
+          </button>
         </>
       }
     >
-      <p>{message}</p>
+      {children || <p>Are you sure?</p>}
     </Modal>
   );
-};
-
-export default Confirm;
+}

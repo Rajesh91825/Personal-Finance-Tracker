@@ -1,103 +1,141 @@
 import React, { useEffect, useState } from "react";
-import { fetchCategories, addCategory, updateCategory, deleteCategory } from "../services/api";
+import { toast } from "react-hot-toast";
+import api from "../services/api";
 import Modal from "../components/Modal";
-import toast from "react-hot-toast";
+import Confirm from "../components/Confirm";
+import "../styles.css";
+
+type Category = {
+  id: number;
+  name: string;
+};
 
 export default function Categories() {
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [showModal, setShowModal] = useState(false);
-  const [editing, setEditing] = useState<any | null>(null);
+  const [editing, setEditing] = useState<Category | null>(null);
   const [name, setName] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState<Category | null>(null);
 
-  useEffect(()=>{ load(); }, []);
-
-  async function load() {
+  const load = async () => {
     try {
-      const c = await fetchCategories();
-      setCategories(c);
-    } catch {}
-  }
+      const res = await api.get("/categories");
+      setCategories(res.data || []);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to fetch categories");
+    }
+  };
 
-  function openAdd() {
-    setEditing(null);
-    setName("");
-    setShowModal(true);
-  }
+  useEffect(() => {
+    load();
+  }, []);
 
-  function openEdit(cat: any) {
-    setEditing(cat);
-    setName(cat.name);
-    setShowModal(true);
-  }
-
-  async function submit() {
-    if (!name) return toast.error("Enter name");
+  const submit = async () => {
     try {
       if (editing) {
-        await updateCategory(editing.id, { name });
-        toast.success("Category updated ✅");
+        await api.put(`/categories/${editing.id}`, { name });
+        toast.success("Category updated");
       } else {
-        await addCategory({ name });
-        toast.success("Category added ✅");
+        await api.post("/categories", { name });
+        toast.success("Category added");
       }
       setShowModal(false);
+      setEditing(null);
+      setName("");
       load();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Error");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to save category");
     }
-  }
+  };
 
-  async function handleDelete(id: number) {
-    if (!window.confirm("Delete category? This will cascade if allowed.")) return;
+  const remove = async (id: number) => {
     try {
-      await deleteCategory(id);
-      toast.success("Category deleted ✅");
+      await api.delete(`/categories/${id}`);
+      toast.success("Category deleted");
       load();
-    } catch (err:any) {
-      toast.error(err?.response?.data?.message || "Error");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete category");
     }
-  }
+  };
 
   return (
     <div className="page">
-      <h1 className="page-title">📁 Categories</h1>
-
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
-        <button className="btn primary" onClick={openAdd}>+ Add Category</button>
-      </div>
-
-      <div className="card categories-card">
-        {categories.map((c)=>(
-          <div className="category-pill" key={c.id}>
-            <div className="cat-name">{c.name}</div>
-            <div className="cat-actions">
-              <button className="btn outline small" onClick={()=>openEdit(c)}>Edit</button>
-              <button className="btn danger small" onClick={()=>handleDelete(c.id)}>Delete</button>
-            </div>
+      <h2>📂 Categories</h2>
+      <div className="categories-list">
+        {categories.map((c) => (
+          <div key={c.id} className="chip">
+            {c.name}
+            <button
+              className="btn small"
+              onClick={() => {
+                setEditing(c);
+                setName(c.name);
+                setShowModal(true);
+              }}
+            >
+              Edit
+            </button>
+            <button
+              className="btn danger small"
+              onClick={() => setConfirmDelete(c)}
+            >
+              Delete
+            </button>
           </div>
         ))}
+        <button className="btn primary" onClick={() => setShowModal(true)}>
+          + Add
+        </button>
       </div>
 
       {showModal && (
         <Modal
-          open={showModal}   // ✅ pass it here
+          open={showModal}
           title={editing ? "Edit Category" : "Add Category"}
-          onClose={() => setShowModal(false)}
+          onClose={() => {
+            setShowModal(false);
+            setEditing(null);
+            setName("");
+          }}
           footer={
             <>
-              <button className="btn outline" onClick={() => setShowModal(false)}>Cancel</button>
-              <button className="btn primary" onClick={submit}>Save</button>
+              <button
+                className="btn outline"
+                onClick={() => {
+                  setShowModal(false);
+                  setEditing(null);
+                  setName("");
+                }}
+              >
+                Cancel
+              </button>
+              <button className="btn primary" onClick={submit}>
+                Save
+              </button>
             </>
           }
         >
           <input
+            type="text"
             placeholder="Category name"
             value={name}
-            onChange={e => setName(e.target.value)}
-            required
+            onChange={(e) => setName(e.target.value)}
           />
         </Modal>
+      )}
 
+      {confirmDelete && (
+        <Confirm
+          open={!!confirmDelete}
+          title="Delete Category"
+          onCancel={() => setConfirmDelete(null)}
+          onConfirm={() => remove(confirmDelete.id)}
+        >
+          Are you sure you want to delete {confirmDelete.name}?
+        </Confirm>
       )}
     </div>
   );
