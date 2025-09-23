@@ -2,7 +2,7 @@
 
 **FinTrack** is a full-stack personal finance tracker designed to help users manage income, expenses, and savings effortlessly. The platform provides insights with interactive charts, unusual transaction detection, and exportable reports.
 
-**🎥 Demo Video :** <>   
+**🎥 Demo Video :** https://youtu.be/Gl-WXZyRvnM
 ![Image](https://github.com/user-attachments/assets/21642bb5-6779-4d92-95e1-8d9da7173d51)
 
 ---
