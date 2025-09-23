@@ -1,4 +1,3 @@
-// src/pages/Export.tsx
 import React from "react";
 import api from "../api/client";
 
@@ -6,10 +5,20 @@ const ExportPage: React.FC = () => {
   const handleExport = async (format: "csv" | "pdf") => {
     try {
       const res = await api.get(`/export/${format}`, { responseType: "blob" });
+
+      const now = new Date();
+      const timestamp = now
+        .toISOString()
+        .replace("T", "_") 
+        .replace(/:/g, "-")
+        .split(".")[0]; 
+
+      const filename = `transactions_${timestamp}.${format}`;
+
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", `transactions.${format}`);
+      link.setAttribute("download", filename);
       document.body.appendChild(link);
       link.click();
       link.remove();

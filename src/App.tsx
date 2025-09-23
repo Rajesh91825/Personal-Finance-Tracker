@@ -12,17 +12,12 @@ import Export from "./pages/Export";
 
 import MainLayout from "./layouts/MainLayout";
 import AuthLayout from "./layouts/AuthLayout";
+import PrivateRoute from "./components/PrivateRoute";
 
 function App() {
   return (
     <Routes>
-      {/* Public / Auth Routes */}
-      <Route
-        path="/"
-        element={
-            <Landing />
-        }
-      />
+      <Route path="/" element={<Landing />} />
       <Route
         path="/login"
         element={
@@ -40,12 +35,13 @@ function App() {
         }
       />
 
-      {/* Protected Routes */}
       <Route
         path="/dashboard"
         element={
           <MainLayout>
-            <Dashboard />
+            <PrivateRoute>
+              <Dashboard />
+            </PrivateRoute>
           </MainLayout>
         }
       />
@@ -53,7 +49,9 @@ function App() {
         path="/transactions"
         element={
           <MainLayout>
-            <Transactions />
+            <PrivateRoute>
+              <Transactions />
+            </PrivateRoute>
           </MainLayout>
         }
       />
@@ -61,7 +59,9 @@ function App() {
         path="/categories"
         element={
           <MainLayout>
-            <Categories />
+            <PrivateRoute>
+              <Categories />
+            </PrivateRoute>
           </MainLayout>
         }
       />
@@ -69,7 +69,9 @@ function App() {
         path="/analytics"
         element={
           <MainLayout>
-            <Analytics />
+            <PrivateRoute>
+              <Analytics />
+            </PrivateRoute>
           </MainLayout>
         }
       />
@@ -77,7 +79,9 @@ function App() {
         path="/export"
         element={
           <MainLayout>
-            <Export />
+            <PrivateRoute>
+              <Export />
+            </PrivateRoute>
           </MainLayout>
         }
       />

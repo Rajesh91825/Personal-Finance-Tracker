@@ -1,10 +1,7 @@
-// src/services/api.ts
 import client from "../api/client";
 
-// keep default export (so pages can still do `api.get(...)`)
 export default client;
 
-// also export helper wrappers if you want cleaner usage elsewhere
 export const getDashboard = () => client.get("/transactions/summary?period=monthly");
 export const getTransactions = () => client.get("/transactions");
 export const getCategories = () => client.get("/categories");

@@ -1,4 +1,3 @@
-// src/pages/Analytics.tsx
 import React, { useEffect, useState } from "react";
 import api from "../services/api";
 import {
@@ -42,7 +41,6 @@ export default function Analytics() {
     load();
   }, []);
 
-  // Income pie chart
   const incomeByCategory: ChartData[] = Object.values(
     transactions
       .filter((t) => t.category_type === "income")
@@ -53,7 +51,6 @@ export default function Analytics() {
       }, {})
   );
 
-  // Expense pie chart
   const expenseByCategory: ChartData[] = Object.values(
     transactions
       .filter((t) => t.category_type === "expense")
@@ -70,7 +67,6 @@ export default function Analytics() {
     <div className="page">
       <h2>📈 Analytics</h2>
 
-      {/* Two pie charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div className="p-4 bg-white rounded shadow">
           <h3 className="mb-2 font-semibold">Income Breakdown</h3>
@@ -114,7 +110,6 @@ export default function Analytics() {
         </div>
       </div>
 
-      {/* Spending by category */}
       <h3 className="text-lg font-semibold mb-2">Spending by Category</h3>
       <ResponsiveContainer width="100%" height={300}>
         <BarChart data={expenseByCategory}>
@@ -127,7 +122,6 @@ export default function Analytics() {
         </BarChart>
       </ResponsiveContainer>
 
-      {/* Unusual Transactions */}
       <h3 className="text-lg font-semibold mt-6 mb-2">Unusual Transactions</h3>
       <table className="table">
         <thead>

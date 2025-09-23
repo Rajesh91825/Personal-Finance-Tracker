@@ -1,4 +1,3 @@
-// src/pages/Dashboard.tsx
 import React, { useEffect, useState } from "react";
 import api from "../services/api";
 import { rupee } from "../utils/format";
@@ -44,7 +43,6 @@ export default function Dashboard() {
 
   if (loading) return <p>Loading...</p>;
 
-  // Totals
   const totalIncome = transactions
     .filter((t) => t.category_type === "income")
     .reduce((acc, t) => acc + Number(t.amount), 0);
@@ -55,14 +53,12 @@ export default function Dashboard() {
 
   const netBalance = totalIncome - totalExpense;
 
-  // Weekly trend (line chart)
   const weeklyTrend = transactions.map((t) => ({
     date: new Date(t.transaction_date).toLocaleDateString(),
     income: t.category_type === "income" ? Number(t.amount) : 0,
     expense: t.category_type === "expense" ? Number(t.amount) : 0,
   }));
 
-  // Monthly breakdown (bar chart by category)
   const monthlyBreakdown = Object.values(
     transactions.reduce((acc: Record<string, { category: string; expense: number }>, t) => {
       if (t.category_type === "expense") {
@@ -79,7 +75,6 @@ export default function Dashboard() {
     <div className="page">
       <h2>📊 Dashboard</h2>
 
-      {/* Top summary cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="p-4 bg-green-100 rounded">
           <h3>Total Income</h3>
@@ -95,9 +90,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Graphs row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        {/* Line chart: weekly trend */}
         <div className="p-4 bg-white rounded shadow">
           <h3 className="mb-2 font-semibold">Weekly Spend Trend</h3>
           <ResponsiveContainer width="100%" height={300}>
@@ -113,7 +106,6 @@ export default function Dashboard() {
           </ResponsiveContainer>
         </div>
 
-        {/* Bar chart: monthly breakdown */}
         <div className="p-4 bg-white rounded shadow">
           <h3 className="mb-2 font-semibold">Monthly Spend Breakdown</h3>
           <ResponsiveContainer width="100%" height={300}>
@@ -129,7 +121,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Recent Transactions */}
       <h3 className="text-lg font-semibold mb-2">Recent Transactions</h3>
       <table className="table mb-6">
         <thead>

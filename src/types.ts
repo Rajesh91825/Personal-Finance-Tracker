@@ -8,7 +8,7 @@ export interface Transaction {
   id?: number;
   amount: number | string;
   description: string;
-  transaction_date: string; // YYYY-MM-DD
+  transaction_date: string;
   category?: string;
   category_id?: number;
 }

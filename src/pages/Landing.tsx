@@ -4,9 +4,7 @@ import { Link } from "react-router-dom";
 export default function Landing() {
   return (
     <div className="w-full min-h-screen bg-gray-50 text-gray-900">
-      {/* Hero Section */}
       <section className="w-full min-h-screen flex flex-col md:flex-row items-center justify-between px-10 lg:px-20 py-24 bg-gradient-to-r from-indigo-700 via-purple-700 to-indigo-900 text-white">
-        {/* Left */}
         <div className="flex-1 space-y-6">
           <h1 className="text-6xl font-extrabold leading-tight">
             Welcome to{" "}
@@ -45,7 +43,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Features Section */}
       <section className="w-full py-20 bg-white">
         <h2 className="text-4xl font-bold text-center text-gray-800 mb-12">
           Why Choose <span className="text-indigo-600">FinTrack</span>?
@@ -75,7 +72,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="w-full py-6 bg-gray-900 text-gray-400 text-center">
         © {new Date().getFullYear()} FinTrack · All Rights Reserved
       </footer>

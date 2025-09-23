@@ -1,7 +1,5 @@
-// src/pages/TransactionForm.tsx
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-// import { Transaction, Category } from "../types";
 import api from "../api/client";
 import { useNavigate, useParams } from "react-router-dom";
 

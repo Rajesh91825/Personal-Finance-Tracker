@@ -1,4 +1,3 @@
-// src/pages/TransactionsList.tsx
 import React, { useEffect, useState } from "react";
 import api from "../services/api";
 import { rupee } from "../utils/format";
@@ -71,7 +70,6 @@ export default function TransactionsList() {
         + Add Transaction
       </button>
 
-      {/* Transactions Table */}
       <table className="table">
         <thead>
           <tr>
@@ -102,13 +100,11 @@ export default function TransactionsList() {
         </tbody>
       </table>
 
-      {/* Inline Modal (old style) */}
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-96">
             <h3 className="text-lg font-bold mb-4">Add Transaction</h3>
 
-            {/* Income/Expense toggle */}
             <div className="flex items-center gap-4 mb-4">
               <label className="flex items-center gap-2">
                 <input
@@ -128,7 +124,6 @@ export default function TransactionsList() {
               </label>
             </div>
 
-            {/* Form fields */}
             <input
               className="w-full p-2 border rounded mb-2"
               type="text"
@@ -162,7 +157,6 @@ export default function TransactionsList() {
               ))}
             </select>
 
-            {/* Footer buttons */}
             <div className="flex justify-end gap-2">
               <button
                 className="px-4 py-2 bg-gray-300 rounded"
