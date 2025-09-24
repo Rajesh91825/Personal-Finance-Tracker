@@ -2,7 +2,12 @@
 
 **FinTrack** is a full-stack personal finance tracker designed to help users manage income, expenses, and savings effortlessly. The platform provides insights with interactive charts, unusual transaction detection, and exportable reports.
 
-**🎥 Demo Video :** https://youtu.be/Gl-WXZyRvnM
+- **🌐 Live App**: [FinTrack Frontend (Vercel)](https://fin-track-sepia.vercel.app/)  
+- **⚙️ Backend API**: [FinTrack Backend (Render)](https://fintrack-uhh4.onrender.com/)  
+- **🗄️ Database**: Supabase (PostgreSQL)
+- **📖 API Documentation**: [API_Specification.md](./API_Specification.md)
+- **🎥 Demo Video**: [Watch on YouTube](https://youtu.be/Gl-WXZyRvnM)
+
 
 ![Image](https://github.com/user-attachments/assets/21642bb5-6779-4d92-95e1-8d9da7173d51)
 
@@ -28,11 +33,11 @@
    - Spending trends over time.
    - Unusual transactions detection with thresholds.
 
-4. **Categories**
+5. **Categories**
    - Create and manage categories.
    - Segregate categories as income or expense.
 
-5. **Export Data**
+6. **Export Data**
    - Download your transactions as **CSV** or **PDF** with timestamped filenames.
 
 ---
@@ -41,7 +46,7 @@
 
 - **Frontend**: React, TypeScript, TailwindCSS, Recharts  
 - **Backend**: Node.js, Express.js  
-- **Database**: PostgreSQL  
+- **Database**: PostgreSQL (Supabase) 
 - **Authentication**: JWT  
 - **Export**: CSV & PDF generation  
 
@@ -60,7 +65,7 @@ Ensure you have the following installed:
 ---
 
 ### **2. Clone the Repository**
-Both frontend and backend from respective branches separately
+Clone both **frontend** and **backend** from their respective branches.
 
 ### **3. Install Dependencies**
 
@@ -74,7 +79,7 @@ npm install
 
 ### 4. Setup Environment Variables
 
-Create backend/.env:
+Create `backend/.env`:
 
 PORT=5000
 DATABASE_URL=postgres://username:password@localhost:5432/fintrack
